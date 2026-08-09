@@ -1,0 +1,8 @@
+.venv/
+credentials.json
+token.json
+.DS_Store
+__pycache__/
+mailTemplates/
+
+# TODO: Add other files to ignore
