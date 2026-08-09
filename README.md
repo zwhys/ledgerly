@@ -1,2 +1,8 @@
-Add ledgerlybot@gmail.com to the forwarding in gmail
-Import mailFilters.xml
+# Ledgerly
+
+Ledgerly is an app
+
+## Installation
+
+## How it works
+

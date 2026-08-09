@@ -7,7 +7,7 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 
 
 def get_credentials():
-    creds = None
+    creds: Credentials = None
     if os.path.exists('token.json'):
         creds = Credentials.from_authorized_user_file('token.json', SCOPES)
 
@@ -15,7 +15,7 @@ def get_credentials():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
+            flow: InstalledAppFlow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
         with open('token.json', 'w') as token:
@@ -26,4 +26,3 @@ def get_credentials():
 
 if __name__ == '__main__':
     creds = get_credentials()
-# TODO: Add types
