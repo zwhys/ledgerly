@@ -103,5 +103,7 @@ def extract_fields(body: str) -> dict:
 
 if __name__ == "__main__":
     results_out = get_unread_and_mark_read()
-    for result in results_out:
-        print(add_user_to_body(result))
+
+    with open("mailTemplates/results.txt", "w", encoding="utf-8") as file:
+        for result in results_out:
+            file.write(str(add_user_to_body(result)) + "\n")
