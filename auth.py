@@ -22,7 +22,3 @@ def get_credentials():
             token.write(creds.to_json())
 
     return creds
-
-
-if __name__ == '__main__':
-    creds = get_credentials()

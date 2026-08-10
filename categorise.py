@@ -13,14 +13,12 @@ EXPENSE_CATEGORIES = [
     "Health",
     "Education",
     "Entertainment",
-    "Reimbursed Expenses"
 ]
 
 INCOME_CATEGORIES = [
     "Allowance",
     "Salary",
     "Bonus",
-    "Reimbursedment"
 ]
 
 load_dotenv()
@@ -38,7 +36,7 @@ def transaction_type(fields: dict) -> str:
     return transaction
 
 
-def categorise(fields: dict):
+def categorise(fields: dict) -> dict:
     '''Classifies the category and add the confidence level'''
     if transaction_type(fields) == "Expense":
         categories = EXPENSE_CATEGORIES
@@ -71,17 +69,8 @@ def categorise(fields: dict):
     if category_and_confidence["category"] not in categories:
         category_and_confidence["category"] = "Other"
 
-    print(category_and_confidence)
     return category_and_confidence
 
 
 # TODO: Allow user to choose own category through a telegram bot, decided using confidence level
 # TODO: Add error handling (Mark as read only after classification is done)
-
-if __name__ == "__main__":
-    users_and_bodies = get_users_and_bodies()
-    for user_and_body in users_and_bodies:
-        fields = get_user_email_addr_and_fields(user_and_body)
-        if fields.get('date') is None:
-            continue
-        categorise(fields)

@@ -104,12 +104,3 @@ def get_user_email_addr_and_fields(user_and_body: dict[str, str]):
     user_email = get_email_addr(user)
     fields['user_email'] = user_email
     return fields
-
-
-if __name__ == "__main__":  # ! For testing only
-    users_and_bodies = get_users_and_bodies()
-
-    with open("mailTemplates/results.txt", "w", encoding="utf-8") as file:
-        for user_and_body in users_and_bodies:
-            file.write(
-                str(get_user_email_addr_and_fields(user_and_body)) + "\n")
