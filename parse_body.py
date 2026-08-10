@@ -18,6 +18,18 @@ RECEIVED_SENTENCE_PATTERN = (
 )
 
 
+def extract_angle_brackets(text):
+    match = re.search(r"<([^>]+)>", text)
+    return match.group(1) if match else None
+
+
+def add_user_to_body(result):
+    body = extract_fields(result['body'])
+    user_email = extract_angle_brackets(result['user'])
+    body['user_email'] = user_email
+    return body
+
+
 def clean_body(body: str) -> str:
     return re.sub(r"\*+", "", body)
 
@@ -90,6 +102,6 @@ def extract_fields(body: str) -> dict:
 
 
 if __name__ == "__main__":
-    bodies = get_unread_and_mark_read()
-    for body in bodies:
-        print(extract_fields(body))
+    results_out = get_unread_and_mark_read()
+    for result in results_out:
+        print(add_user_to_body(result))
