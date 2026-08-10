@@ -51,9 +51,4 @@ def get_unread_and_mark_read() -> list[dict[str, str]]:
     ).execute()
     return results_out
 
-
-if __name__ == '__main__':
-    get_unread_and_mark_read()
-
-
 # TODO: Make it so that it runs everytime there is a new email being forwarded into the

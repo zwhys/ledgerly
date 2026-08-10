@@ -23,7 +23,7 @@ def extract_angle_brackets(text):
     return match.group(1) if match else None
 
 
-def add_user_to_body(result):
+def add_user_to_result(result):
     body = extract_fields(result['body'])
     user_email = extract_angle_brackets(result['user'])
     body['user_email'] = user_email
@@ -106,4 +106,4 @@ if __name__ == "__main__":
 
     with open("mailTemplates/results.txt", "w", encoding="utf-8") as file:
         for result in results_out:
-            file.write(str(add_user_to_body(result)) + "\n")
+            file.write(str(add_user_to_result(result)) + "\n")
