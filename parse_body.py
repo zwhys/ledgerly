@@ -23,7 +23,7 @@ def extract_angle_brackets(text):
     return match.group(1) if match else None
 
 
-def add_user_to_result(result):
+def add_user_to_result(result: dict[str, str]):
     body = extract_fields(result['body'])
     user_email = extract_angle_brackets(result['user'])
     body['user_email'] = user_email
