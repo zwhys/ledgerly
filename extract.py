@@ -26,10 +26,10 @@ def get_unread_and_mark_read() -> list[dict[str, str]]:
         parts: list[dict] = payload.get('parts', [])
         headers: list[dict] = payload.get('headers', [])
 
-        user_email = ''
+        user = ''
         for header in headers:
             if header['name'] == 'From':
-                user_email = header['value']
+                user = header['value']
                 break
 
         body = ''
@@ -39,7 +39,7 @@ def get_unread_and_mark_read() -> list[dict[str, str]]:
                 body = base64.urlsafe_b64decode(data).decode('utf-8')
                 break
 
-        results_out.append({'user_email': user_email, 'body': body})
+        results_out.append({'user': user, 'body': body})
         message_ids.append(msg['id'])
 
     service.users().messages().batchModify(
@@ -57,4 +57,3 @@ if __name__ == '__main__':
 
 
 # TODO: Make it so that it runs everytime there is a new email being forwarded into the
-
