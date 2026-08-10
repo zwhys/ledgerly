@@ -8,7 +8,8 @@
         <content></content>
         <apps:property name='from'
             value='ibanking.alert@dbs.com OR DBSAlert@dbs.com OR paylah.alert@dbs.com' />
-        <apps:property name='doesNotHaveTheWord' value='Your eDocument(s) are ready for viewing' />
+        <apps:property name='doesNotHaveTheWord'
+            value='&quot;Your eDocument(s) are ready for viewing&quot; OR &quot;Manage Card Alert&quot;' />
         <apps:property name='forwardTo' value='ledgerlybot@gmail.com' />
     </entry>
 </feed>
