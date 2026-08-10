@@ -13,24 +13,32 @@ FROM_TO_BLOCK_PATTERN = (
     r"To:\s*(.+)"
 )
 
+RECEIVED_SENTENCE_PATTERN = (
+    r"received\s+(.+?)\s+on\s+(.+?)\s+from\s+(.+?)\s+to\s+(.+?)\s+via\s+\w+\."
+)
+
 
 def clean_body(body: str) -> str:
     return re.sub(r"\*+", "", body)
 
 
 def extract_labeled_block(cleaned_body: str) -> dict:
-    result = {"date": None, "amount": None, "from": None, "to": None}
+    result = {"date": None, "amount": None,
+              "from": None, "to": None, "transaction": None}
     matched = re.search(BLOCK_PATTERN, cleaned_body, re.IGNORECASE)
     if matched:
         result["date"] = matched.group(1).strip()
         result["amount"] = matched.group(2).strip()
         result["from"] = matched.group(3).strip()
         result["to"] = matched.group(4).strip()
+        result["transaction"] = "Expense"
+
     return result
 
 
 def extract_received_transfer(cleaned_body: str) -> dict:
-    result = {"date": None, "amount": None, "from": None, "to": None}
+    result = {"date": None, "amount": None,
+              "from": None, "to": None, "transaction": None}
 
     received_matched = re.search(
         r"received\s+(.+?)\s+via\s+\w+\s+on\s+(.+?)\.",
@@ -46,17 +54,34 @@ def extract_received_transfer(cleaned_body: str) -> dict:
     if from_to_matched:
         result["from"] = from_to_matched.group(1).strip()
         result["to"] = from_to_matched.group(2).strip()
+    result["transaction"] = "Income"
+
+    return result
+
+
+def extract_received_sentence(cleaned_body: str) -> dict:
+    result = {"date": None, "amount": None,
+              "from": None, "to": None, "transaction": None}
+    matched = re.search(RECEIVED_SENTENCE_PATTERN,
+                        cleaned_body, re.IGNORECASE | re.DOTALL)
+    if matched:
+        result["amount"] = matched.group(1).strip()
+        result["date"] = matched.group(2).strip()
+        result["from"] = matched.group(3).strip()
+        result["to"] = matched.group(4).strip()
+        result["transaction"] = "Income"
 
     return result
 
 
 def extract_fields(body: str) -> dict:
     cleaned_body = clean_body(body)
-
     result = extract_labeled_block(cleaned_body)
 
-    if any(v is None for v in result.values()):
-        fallback = extract_received_transfer(cleaned_body)
+    for extractor in (extract_received_transfer, extract_received_sentence):
+        if not any(value is None for value in result.values()):
+            break
+        fallback = extractor(cleaned_body)
         for key in result:
             if result[key] is None:
                 result[key] = fallback[key]
