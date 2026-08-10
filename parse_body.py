@@ -1,43 +1,32 @@
 import re
-from extract import get_unread_and_mark_read
+from extract import get_users_and_bodies
 
-BLOCK_PATTERN = (
+EXPENSE_BLOCK_PATTERN = (
     r"Date\s*&\s*Time:\s*(.+)\n"
     r"Amount:\s*(.+)\n"
     r"From:\s*(.+)\n"
     r"To:\s*(.+)"
 )
 
-FROM_TO_BLOCK_PATTERN = (
+INCOME_BLOCK_PATTERN = (
     r"From:\s*(.+)\n"
     r"To:\s*(.+)"
 )
 
-RECEIVED_SENTENCE_PATTERN = (
+INCOME_SENTENCE_PATTERN = (
     r"received\s+(.+?)\s+on\s+(.+?)\s+from\s+(.+?)\s+to\s+(.+?)\s+via\s+\w+\."
 )
 
 
-def extract_angle_brackets(text):
-    match = re.search(r"<([^>]+)>", text)
-    return match.group(1) if match else None
-
-
-def add_user_to_result(result: dict[str, str]):
-    body = extract_fields(result['body'])
-    user_email = extract_angle_brackets(result['user'])
-    body['user_email'] = user_email
-    return body
-
-
 def clean_body(body: str) -> str:
+    '''Remove any markdown characters'''
     return re.sub(r"\*+", "", body)
 
 
-def extract_labeled_block(cleaned_body: str) -> dict:
+def get_expense_block(cleaned_body: str) -> dict:
     result = {"date": None, "amount": None,
               "from": None, "to": None, "transaction": None}
-    matched = re.search(BLOCK_PATTERN, cleaned_body, re.IGNORECASE)
+    matched = re.search(EXPENSE_BLOCK_PATTERN, cleaned_body, re.IGNORECASE)
     if matched:
         result["date"] = matched.group(1).strip()
         result["amount"] = matched.group(2).strip()
@@ -48,7 +37,7 @@ def extract_labeled_block(cleaned_body: str) -> dict:
     return result
 
 
-def extract_received_transfer(cleaned_body: str) -> dict:
+def get_income_block(cleaned_body: str) -> dict:
     result = {"date": None, "amount": None,
               "from": None, "to": None, "transaction": None}
 
@@ -62,7 +51,7 @@ def extract_received_transfer(cleaned_body: str) -> dict:
         result["date"] = received_matched.group(2).strip()
 
     from_to_matched = re.search(
-        FROM_TO_BLOCK_PATTERN, cleaned_body, re.IGNORECASE)
+        INCOME_BLOCK_PATTERN, cleaned_body, re.IGNORECASE)
     if from_to_matched:
         result["from"] = from_to_matched.group(1).strip()
         result["to"] = from_to_matched.group(2).strip()
@@ -71,10 +60,10 @@ def extract_received_transfer(cleaned_body: str) -> dict:
     return result
 
 
-def extract_received_sentence(cleaned_body: str) -> dict:
+def get_income_sentence(cleaned_body: str) -> dict:
     result = {"date": None, "amount": None,
               "from": None, "to": None, "transaction": None}
-    matched = re.search(RECEIVED_SENTENCE_PATTERN,
+    matched = re.search(INCOME_SENTENCE_PATTERN,
                         cleaned_body, re.IGNORECASE | re.DOTALL)
     if matched:
         result["amount"] = matched.group(1).strip()
@@ -86,24 +75,41 @@ def extract_received_sentence(cleaned_body: str) -> dict:
     return result
 
 
-def extract_fields(body: str) -> dict:
+def get_fields(body: str) -> dict:
     cleaned_body = clean_body(body)
-    result = extract_labeled_block(cleaned_body)
+    fields = get_expense_block(cleaned_body)
 
-    for extractor in (extract_received_transfer, extract_received_sentence):
-        if not any(value is None for value in result.values()):
+    for extractor in (get_income_block, get_income_sentence):
+        if not any(field is None for field in fields.values()):
             break
         fallback = extractor(cleaned_body)
-        for key in result:
-            if result[key] is None:
-                result[key] = fallback[key]
+        for key in fields:
+            if fields[key] is None:
+                fields[key] = fallback[key]
 
-    return result
+    return fields
 
 
-if __name__ == "__main__":
-    results_out = get_unread_and_mark_read()
+# TODO: Make sure this works as intended (No mailto links) like '[forwarding-noreply@google.com](mailto\:forwarding-noreply@google.com)'
+def get_email_addr(text):
+    match = re.search(r"<([^>]+)>", text)
+    return match.group(1) if match else None
+
+
+def get_user_email_addr_and_fields(user_and_body: dict[str, str]):
+    '''Get user email address from user and merge it with fields'''
+    body = user_and_body['body']
+    user = user_and_body['user']
+    fields = get_fields(body)
+    user_email = get_email_addr(user)
+    fields['user_email'] = user_email
+    return fields
+
+
+if __name__ == "__main__":  # ! For testing only
+    users_and_bodies = get_users_and_bodies()
 
     with open("mailTemplates/results.txt", "w", encoding="utf-8") as file:
-        for result in results_out:
-            file.write(str(add_user_to_result(result)) + "\n")
+        for user_and_body in users_and_bodies:
+            file.write(
+                str(get_user_email_addr_and_fields(user_and_body)) + "\n")

@@ -3,13 +3,9 @@ from openai import OpenAI
 import json
 from dotenv import load_dotenv
 
-from extract import get_unread_and_mark_read
-from parse_body import add_user_to_result
+from extract import get_users_and_bodies
+from parse_body import get_user_email_addr_and_fields
 
-load_dotenv()
-
-
-client = OpenAI()
 
 EXPENSE_CATEGORIES = [
     "Food",
@@ -27,25 +23,29 @@ INCOME_CATEGORIES = [
     "Reimbursedment"
 ]
 
+load_dotenv()
+client = OpenAI()
 
-def extract_communicator(result: dict) -> dict[str, Any]:
-    recipient: str = result['to']
-    sender: str = result['from']
+
+def extract_communicator(fields: dict) -> dict[str, Any]:
+    recipient: str = fields['to']
+    sender: str = fields['from']
     return {"recipient": recipient, "sender": sender}
 
 
-def transaction_type(body: dict) -> str:
-    transaction: str = body['transaction']
+def transaction_type(fields: dict) -> str:
+    transaction: str = fields['transaction']
     return transaction
 
 
-def classify(result: dict):
-    if transaction_type(result) == "Expense":
+def categorise(fields: dict):
+    '''Classifies the category and add the confidence level'''
+    if transaction_type(fields) == "Expense":
         categories = EXPENSE_CATEGORIES
-        merchant = extract_communicator(result)["recipient"]
-    elif transaction_type(result) == "Income":
+        merchant = extract_communicator(fields)["recipient"]
+    elif transaction_type(fields) == "Income":
         categories = INCOME_CATEGORIES
-        merchant = extract_communicator(result)["sender"]
+        merchant = extract_communicator(fields)["sender"]
 
     prompt = f"""Classify the following text into exactly one of these categories: {", ".join(categories)}.
 
@@ -66,26 +66,22 @@ def classify(result: dict):
         },
     )
 
-    raw = response.output_text.strip()
-    raw_out = json.loads(raw)
+    category_and_confidence: str = json.loads(response.output_text.strip())
 
-    if raw_out["category"] not in categories:
-        raw_out["category"] = "Other"
+    if category_and_confidence["category"] not in categories:
+        category_and_confidence["category"] = "Other"
 
-    print(raw_out)
-    return raw_out
+    print(category_and_confidence)
+    return category_and_confidence
 
 
 # TODO: Allow user to choose own category through a telegram bot, decided using confidence level
 # TODO: Add error handling (Mark as read only after classification is done)
 
 if __name__ == "__main__":
-    results_out = get_unread_and_mark_read()
-    for result in results_out:
-        result = add_user_to_result(result)
-        if result.get('date') is None:
+    users_and_bodies = get_users_and_bodies()
+    for user_and_body in users_and_bodies:
+        fields = get_user_email_addr_and_fields(user_and_body)
+        if fields.get('date') is None:
             continue
-        classify(result)
-        
-
-##TODO: Deal with '[forwarding-noreply@google.com](mailto\:forwarding-noreply@google.com)'
+        categorise(fields)
