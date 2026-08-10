@@ -1,10 +1,11 @@
 from googleapiclient.discovery import build
+import re
 import base64
 from typing import Any
 from auth import get_credentials
 
 
-def get_unread_and_mark_read() -> list[str]:
+def get_unread_and_mark_read() -> list[dict[str, str]]:
     creds = get_credentials()
     service = build('gmail', 'v1', credentials=creds)
 
@@ -15,22 +16,30 @@ def get_unread_and_mark_read() -> list[str]:
     messages: list[dict[str, str]] = results.get('messages', [])
 
     message_ids: list[str] = []
-    bodies: list[str] = []
+    results_out: list[dict[str, str]] = []
 
     for msg in messages:
         full_msg = service.users().messages().get(
             userId='me', id=msg['id']).execute()
 
-        payload: dict[str, Any] = full_msg['payload']
+        payload: dict[str, Any] = full_msg.get('payload', {})
         parts: list[dict] = payload.get('parts', [])
+        headers: list[dict] = payload.get('headers', [])
 
+        user_email = ''
+        for header in headers:
+            if header['name'] == 'From':
+                user_email = header['value']
+                break
+
+        body = ''
         for msg_data_part in parts:
             if msg_data_part['mimeType'] == 'text/plain':
                 data = msg_data_part['body'].get('data', '')
                 body = base64.urlsafe_b64decode(data).decode('utf-8')
-                bodies.append(body)
                 break
 
+        results_out.append({'user_email': user_email, 'body': body})
         message_ids.append(msg['id'])
 
     service.users().messages().batchModify(
@@ -40,12 +49,12 @@ def get_unread_and_mark_read() -> list[str]:
             'removeLabelIds': ['UNREAD']
         }
     ).execute()
-
-    return bodies
+    return results_out
 
 
 if __name__ == '__main__':
     get_unread_and_mark_read()
 
 
-#TODO: Make it so that it runs everytime there is a new email being forwarded into the 
+# TODO: Make it so that it runs everytime there is a new email being forwarded into the
+
