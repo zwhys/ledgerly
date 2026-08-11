@@ -62,3 +62,4 @@ def get_users_and_bodies() -> list[dict[str, str]]:
     return users_and_bodies
 
 # TODO: Make it so that it runs everytime there is a new email being forwarded into the
+# TODO: Fix the problem where there is no year (Maybe spreadsheet by year)
