@@ -1,5 +1,4 @@
 import re
-from extract import get_users_and_bodies
 
 EXPENSE_BLOCK_PATTERN = (
     r"Date\s*&\s*Time:\s*(.+)\n"

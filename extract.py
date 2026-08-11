@@ -1,10 +1,11 @@
 from googleapiclient.discovery import build
 import base64
 from typing import Any
+
 from auth import get_credentials
 
 
-def get_email(service) -> dict[str, Any]:
+def get_response(service) -> dict[str, Any]:
     '''Get unread emails'''
     # response: dict[str, Any] = service.users().messages().list(
     #     userId='me', q='is:unread').execute() #!for production
@@ -28,7 +29,7 @@ def get_users_and_bodies() -> list[dict[str, str]]:
     '''Get user of service and body of email of all unread emails'''
     creds = get_credentials()
     service = build('gmail', 'v1', credentials=creds)
-    response = get_email(service)
+    response = get_response(service)
     response_messages: list[dict[str, str]] = response.get('messages', [])
 
     response_message_ids: list[str] = []

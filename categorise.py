@@ -3,10 +3,6 @@ from openai import OpenAI
 import json
 from dotenv import load_dotenv
 
-from extract import get_users_and_bodies
-from parse_body import get_user_email_addr_and_fields
-
-
 EXPENSE_CATEGORIES = [
     "Food",
     "Transportation",
