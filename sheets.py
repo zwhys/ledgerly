@@ -21,7 +21,7 @@ def append_transaction(sheet_id: str, data: dict, worksheet_name: str = "Transac
 
     row = [
         data["date"],
-        data["transaction"],  # TODO: Rename transaction to type
+        data["type"],
         data["category"],
         float(data["amount"]),
         data["currency"],
@@ -31,13 +31,14 @@ def append_transaction(sheet_id: str, data: dict, worksheet_name: str = "Transac
 
     row = [
         data["date"],
-        data["transaction"],
+        data["type"],
         data["category"],
         data["amount"],
         data["currency"],
     ]
 
     worksheet.append_row(row, value_input_option="USER_ENTERED")
+
 
 def create_worksheet(spreadsheet: gspread.Spreadsheet, worksheet_name: str = "Transactions") -> gspread.Worksheet:
     '''Creates Transaction worksheet if not there'''

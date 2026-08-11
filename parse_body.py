@@ -25,21 +25,21 @@ def clean_body(body: str) -> str:
 
 def get_expense_block(cleaned_body: str) -> dict:
     result = {"date": None, "amount": None,
-              "from": None, "to": None, "transaction": None}
+              "from": None, "to": None, "type": None}
     matched = re.search(EXPENSE_BLOCK_PATTERN, cleaned_body, re.IGNORECASE)
     if matched:
         result["date"] = matched.group(1).strip()
         result["amount"] = matched.group(2).strip()
         result["from"] = matched.group(3).strip()
         result["to"] = matched.group(4).strip()
-        result["transaction"] = "Expense"
+        result["type"] = "Expense"
 
     return result
 
 
 def get_income_block(cleaned_body: str) -> dict:
     result = {"date": None, "amount": None,
-              "from": None, "to": None, "transaction": None}
+              "from": None, "to": None, "type": None}
 
     received_matched = re.search(
         r"received\s+(.+?)\s+via\s+\w+\s+on\s+(.+?)\.",
@@ -55,14 +55,14 @@ def get_income_block(cleaned_body: str) -> dict:
     if from_to_matched:
         result["from"] = from_to_matched.group(1).strip()
         result["to"] = from_to_matched.group(2).strip()
-    result["transaction"] = "Income"
+    result["type"] = "Income"
 
     return result
 
 
 def get_income_sentence(cleaned_body: str) -> dict:
     result = {"date": None, "amount": None,
-              "from": None, "to": None, "transaction": None}
+              "from": None, "to": None, "type": None}
     matched = re.search(INCOME_SENTENCE_PATTERN,
                         cleaned_body, re.IGNORECASE | re.DOTALL)
     if matched:
@@ -70,7 +70,7 @@ def get_income_sentence(cleaned_body: str) -> dict:
         result["date"] = matched.group(2).strip()
         result["from"] = matched.group(3).strip()
         result["to"] = matched.group(4).strip()
-        result["transaction"] = "Income"
+        result["type"] = "Income"
 
     return result
 

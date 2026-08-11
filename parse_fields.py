@@ -10,7 +10,7 @@ def parse_fields(fields: dict) -> dict:
 
     data: dict[str, Any] = {
         "date": fields["date"],
-        "transaction": fields["transaction"],
+        "type": fields["type"],
         "category": category_and_confidence["category"],
         "amount": match.group(2),
         "currency": match.group(1),

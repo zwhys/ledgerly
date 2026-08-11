@@ -32,8 +32,8 @@ def extract_communicator(fields: dict) -> dict[str, Any]:
 
 
 def transaction_type(fields: dict) -> str:
-    transaction: str = fields['transaction']
-    return transaction
+    type: str = fields['type']
+    return type
 
 
 def categorise(fields: dict) -> dict:
