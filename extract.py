@@ -44,10 +44,13 @@ def get_users_and_bodies() -> list[dict[str, str]]:
         payload_headers: list[dict] = message_payload.get('headers', [])
 
         user = ''
+        full_date = ''
         for header in payload_headers:
             if header['name'] == 'From':
                 user = header['value']
-                break
+            if header['name'] == 'Date':
+                full_date = header['value']
+            
 
         body = ''
         for msg_data_part in payload_parts:
@@ -56,11 +59,10 @@ def get_users_and_bodies() -> list[dict[str, str]]:
                 body = base64.urlsafe_b64decode(data).decode('utf-8')
                 break
 
-        users_and_bodies.append({'user': user, 'body': body})
+        users_and_bodies.append({'user': user, 'body': body, 'date': full_date})
         response_message_ids.append(message['id'])
 
     mark_emails_as_read(service, response_message_ids)
     return users_and_bodies
 
 # TODO: Make it so that it runs everytime there is a new email being forwarded into the
-# TODO: Fix the problem where there is no year (Maybe spreadsheet by year)

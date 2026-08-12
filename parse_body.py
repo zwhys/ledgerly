@@ -99,7 +99,9 @@ def get_user_email_addr_and_fields(user_and_body: dict[str, str]):
     '''Get user email address from user and merge it with fields'''
     body = user_and_body['body']
     user = user_and_body['user']
+    full_date = user_and_body['date']
     fields = get_fields(body)
     user_email = get_email_addr(user)
     fields['user_email'] = user_email
+    fields['full_date'] = full_date
     return fields
