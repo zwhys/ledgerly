@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import re
 import gspread
 from google.oauth2.service_account import Credentials
@@ -104,9 +104,9 @@ def seed_spreadsheet(spreadsheet: gspread.Spreadsheet) -> None:
     # TODO: Makes the instructions page nice
 
 
-def parse_entry_date(date_str: str) -> datetime.datetime:
+def parse_entry_date(date_str: str) -> datetime:
     cleaned = re.sub(r"\s*\([^)]*\)\s*$", "", date_str.strip())
-    return datetime.datetime.strptime(cleaned, "%d/%m/%Y %H:%M:%S")
+    return datetime.strptime(cleaned, "%d/%m/%Y %H:%M:%S")
 
 
 def maybe_insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime) -> None:
