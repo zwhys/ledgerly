@@ -2,8 +2,6 @@
 
 Ledgerly is a Gmail-polling ETL pipeline that categorizes **DBS** bank transactions via an LLM and stores them in Google Sheets
 
-## Features
-
 ## Setup
 
 ### 1. Import Gmail Filters
@@ -28,8 +26,6 @@ Share the spreadsheet with the following service account and give it **Editor** 
 
 Email tanziyan297@gmail.com the URL of the google sheet
 
-<!-- TODO: Find a better way  -->
-
 ### 4. Done
 
 That's all you need to do. Ledgerly is now ready to use.
@@ -51,10 +47,9 @@ That's all you need to do. Ledgerly is now ready to use.
 
 _Requires Gmail filters and Sheet access to be configured first — see [Setup](##setup)._
 
-## Built With
-
 ## Future Improvements
 
 <!-- Also known as limitations -->
 
 1.  Add support for other banks (Only supports DBS banks for now)
+2.  Add telegram bot integration

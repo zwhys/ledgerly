@@ -1,9 +1,11 @@
-.venv/
+.env
 credentials.json
 token.json
+service_account.json
+
+
 .DS_Store
+.venv/
 __pycache__/
 mailTemplates/
-.env
-secrets/
-service_account.json
+telegrambot/

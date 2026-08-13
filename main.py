@@ -23,9 +23,3 @@ if __name__ == "__main__":
 
         entry = parse_data(fields)
         append_transaction(sheet_id, entry)
-
-
-#TODO: Telegram bot
-#TODO: 1. Allow user to choose own category
-#TODO: 2. Allow user to create their own categories
-#TODO: 3. Use this to give the sheets url
