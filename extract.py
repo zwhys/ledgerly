@@ -65,4 +65,4 @@ def get_users_and_bodies() -> list[dict[str, str]]:
     mark_emails_as_read(service, response_message_ids)
     return users_and_bodies
 
-# TODO: Make it so that it runs everytime there is a new email being forwarded into the
+# TODO: Make it so that it runs everytime there is a new email being forwarded into the inbox

@@ -3,12 +3,11 @@ import re
 import gspread
 from google.oauth2.service_account import Credentials
 
-from extract import get_users_and_bodies
-from parse_body import get_user_email_addr_and_fields
-from parse_fields import parse_fields, parse_data
+from store import save_user_sheet
+
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-HEADERS = ["Date", "Type", "Category", "Amount", "Currency"]
+HEADERS = ["Date", "Type", "Category", "Amount", "Currency", "Description"]
 
 INSTRUCTIONS_CONTENT = [
     ["Welcome to Ledgerly"],
@@ -46,11 +45,13 @@ def get_client() -> gspread.Client:
     return _client
 
 
-def connect_sheet(sheet_id: str) -> dict:
+def add_new_user(user_email: str, sheet_id: str) -> dict:
     """Run once when a user first connects their sheet. Verifies access and seeds it."""
     spreadsheet = get_spreadsheet(sheet_id)
     if spreadsheet is None:
         return {"ok": False, "error": "not_found_or_not_shared"}
+
+    save_user_sheet(user_email, sheet_id)
 
     seed_spreadsheet(spreadsheet)
     return {"ok": True, "spreadsheet_title": spreadsheet.title}
@@ -68,9 +69,10 @@ def get_worksheet_for_year(spreadsheet: gspread.Spreadsheet, year: str) -> gspre
         worksheet = spreadsheet.worksheet(year)
     except gspread.WorksheetNotFound:
         worksheet = spreadsheet.add_worksheet(
-            title=year, rows=1000, cols=10, index=1)
+            title=year, rows=1000, cols=20, index=1)
         worksheet.update([HEADERS], "A1")
-        worksheet.format("A1:E1", {"textFormat": {"bold": True}})
+        worksheet.format("A1:F1", {"textFormat": {"bold": True}, "backgroundColor": {
+                         "red": 0.26, "green": 0.53, "blue": 0.96}, })
 
     if worksheet.row_values(1) != HEADERS:
         worksheet.update([HEADERS], "A1")
@@ -92,15 +94,14 @@ def seed_spreadsheet(spreadsheet: gspread.Spreadsheet) -> None:
 
     if re.fullmatch(r"\d{4}", default_worksheet.title):
         default_worksheet = spreadsheet.add_worksheet(
-            title="Instructions", rows=50, cols=5, index=0)
+            title="Instructions", rows=50, cols=20, index=0)
     else:
         default_worksheet.update_title("Instructions")
 
     default_worksheet.update(INSTRUCTIONS_CONTENT, "A1")
     default_worksheet.format(
         "A1", {"textFormat": {"bold": True, "fontSize": 14}})
-    # Makes the instructions page nice
-    # TODO: Make for the instructions page also transaction page
+    # TODO: Makes the instructions page nice
 
 
 def parse_entry_date(date_str: str) -> datetime.datetime:
@@ -110,7 +111,9 @@ def parse_entry_date(date_str: str) -> datetime.datetime:
 
 def maybe_insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime) -> None:
     all_values = worksheet.get_all_values()
+
     if len(all_values) <= 1:
+        insert_month_divider(worksheet, entry_dt, row_index=2)
         return
 
     last_row = all_values[-1]
@@ -124,16 +127,19 @@ def maybe_insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime)
         return  # unparseable — prevents a bad divider
 
     if (last_dt.year, last_dt.month) != (entry_dt.year, entry_dt.month):
-        label = entry_dt.strftime("%B %Y")
-        row_index = len(all_values) + 1
-        worksheet.append_row(
-            [f"— {label} —"], value_input_option="USER_ENTERED")
-        worksheet.merge_cells(f"A{row_index}:E{row_index}")
-        worksheet.format(f"A{row_index}:E{row_index}", {
-            "textFormat": {"bold": True},
-            "horizontalAlignment": "CENTER",
-            "backgroundColor": {"red": 0.93, "green": 0.93, "blue": 0.93},
-        }) #TODO: Make this nice also
+        insert_month_divider(worksheet, entry_dt,
+                             row_index=len(all_values) + 1)
+
+
+def insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime, row_index: int) -> None:
+    label = entry_dt.strftime("%B %Y")
+    worksheet.append_row([f"— {label} —"], value_input_option="USER_ENTERED")
+    worksheet.merge_cells(f"A{row_index}:F{row_index}")
+    worksheet.format(f"A{row_index}:F{row_index}", {
+        "textFormat": {"bold": True},
+        "horizontalAlignment": "CENTER",
+        "backgroundColor": {"red": 0.93, "green": 0.93, "blue": 0.93},
+    })
 
 
 def append_transaction(sheet_id: str, entry: dict):
@@ -155,16 +161,3 @@ def append_transaction(sheet_id: str, entry: dict):
     worksheet.append_row(row, value_input_option="USER_ENTERED")
 
     return
-
-
-if __name__ == "__main__":
-    users_and_bodies = get_users_and_bodies()
-    connect_sheet("1E7G5aDH6Spx4wKx3oIXk2kxNbjHRigw1Y0zAWH7eT4A")
-    for user_and_body in users_and_bodies:
-        fields = get_user_email_addr_and_fields(user_and_body)
-        if fields.get('date') is None:
-            continue
-        entry = parse_data(fields)
-        print(entry)
-        # TODO: Allow for multiple users, (store the id email pair somewhere)
-        append_transaction("1E7G5aDH6Spx4wKx3oIXk2kxNbjHRigw1Y0zAWH7eT4A", entry)
