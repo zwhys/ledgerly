@@ -24,5 +24,3 @@ if __name__ == "__main__":
 
         entry = parse_data(fields)
         append_transaction(sheet_id, entry)
-
-# TODO: Allow for multiple users, (store the id email pair somewhere)

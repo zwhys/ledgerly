@@ -30,7 +30,6 @@ INSTRUCTIONS_CONTENT = [
     ["- A new sheet is created automatically for each year — no setup needed."],
     ["- Don't rename year sheets — Ledgerly looks for them by year (e.g. '2026')."],
     ["- Feel free to add your own charts, pivot tables, or extra tabs elsewhere in this sheet."],
-    ["- Low-confidence entries may need a manual double check — worth reviewing occasionally."],
 ]
 
 _client = None
@@ -99,8 +98,19 @@ def seed_spreadsheet(spreadsheet: gspread.Spreadsheet) -> None:
         default_worksheet.update_title("Instructions")
 
     default_worksheet.update(INSTRUCTIONS_CONTENT, "A1")
+
+    format_instructions(default_worksheet)
+
+
+def format_instructions(default_worksheet: gspread.Worksheet) -> None:
     default_worksheet.format(
-        "A1", {"textFormat": {"bold": True, "fontSize": 14}})
+        "A1", {"textFormat": {"bold": True, "fontSize": 20}})
+
+    for cell in ["A5", "A10", "A17"]:
+        default_worksheet.format(
+            cell, {"textFormat": {"bold": True, "fontSize": 14}})
+    default_worksheet.format(
+        "A19", {"textFormat": {"bold": True, "foregroundColor": {"red": 0.92, "green": 0.26, "blue": 0.21}}})
     # TODO: Makes the instructions page nice
 
 

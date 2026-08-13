@@ -89,7 +89,6 @@ def get_fields(body: str) -> dict:
     return fields
 
 
-# TODO: Make sure this works as intended (No mailto links) like '[forwarding-noreply@google.com](mailto\:forwarding-noreply@google.com)'
 def get_email_addr(text):
     match = re.search(r"<([^>]+)>", text)
     return match.group(1) if match else None
