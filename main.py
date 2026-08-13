@@ -11,8 +11,7 @@ if __name__ == "__main__":
 
     for user_and_body in users_and_bodies:
         fields = get_user_email_addr_and_fields(user_and_body)
-        # TODO: Improve this stopgap measure to prevent other non bank transaction emails
-        if fields.get('date') is None:
+        if fields.get('date') and fields.get('amount') is None:
             continue
 
         user_email = fields.get("user_email")
@@ -24,3 +23,9 @@ if __name__ == "__main__":
 
         entry = parse_data(fields)
         append_transaction(sheet_id, entry)
+
+
+#TODO: Telegram bot
+#TODO: 1. Allow user to choose own category
+#TODO: 2. Allow user to create their own categories
+#TODO: 3. Use this to give the sheets url

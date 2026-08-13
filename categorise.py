@@ -68,5 +68,4 @@ def categorise(fields: dict) -> dict:
     return category_and_confidence
 
 
-# TODO: Allow user to choose own category through a telegram bot, decided using confidence level
 # TODO: Add error handling (Mark as read only after classification is done)

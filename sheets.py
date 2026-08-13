@@ -111,7 +111,6 @@ def format_instructions(default_worksheet: gspread.Worksheet) -> None:
             cell, {"textFormat": {"bold": True, "fontSize": 14}})
     default_worksheet.format(
         "A19", {"textFormat": {"bold": True, "foregroundColor": {"red": 0.92, "green": 0.26, "blue": 0.21}}})
-    # TODO: Makes the instructions page nice
 
 
 def parse_entry_date(date_str: str) -> datetime:
