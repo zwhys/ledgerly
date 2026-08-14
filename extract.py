@@ -50,16 +50,16 @@ def get_users_and_bodies() -> list[dict[str, str]]:
                 user = header['value']
             if header['name'] == 'Date':
                 full_date = header['value']
-            
 
         body = ''
         for msg_data_part in payload_parts:
-            if msg_data_part['mimeType'] == 'text/plain':
+            if msg_data_part['mimeType'] == 'text/html':
                 data = msg_data_part['body'].get('data', '')
                 body = base64.urlsafe_b64decode(data).decode('utf-8')
                 break
 
-        users_and_bodies.append({'user': user, 'body': body, 'date': full_date})
+        users_and_bodies.append(
+            {'user': user, 'body': body, 'date': full_date})
         response_message_ids.append(message['id'])
 
     mark_emails_as_read(service, response_message_ids)

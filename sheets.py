@@ -7,7 +7,8 @@ from store import save_user_sheet
 
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-HEADERS = ["Date", "Type", "Category", "Amount", "Currency", "Description"]
+HEADERS = ["Date", "Type", "Category", "Confidence",
+           "Amount", "Currency", "Description"]
 
 INSTRUCTIONS_CONTENT = [
     ["Welcome to Ledgerly"],
@@ -23,6 +24,8 @@ INSTRUCTIONS_CONTENT = [
     ["Date", "When the transaction happened"],
     ["Type", "Income or Expense"],
     ["Category", "e.g. Salary, Food, Transport"],
+    # CONFIDENCE: Remove when bot is done
+    ["Confidence", "How confident the LLM is in its catogorisation"],
     ["Amount", "Transaction amount"],
     ["Currency", "Currency code, e.g. SGD"],
     [""],
@@ -44,16 +47,16 @@ def get_client() -> gspread.Client:
     return _client
 
 
-def add_new_user(user_email: str, sheet_id: str) -> dict:
-    """Run once when a user first connects their sheet. Verifies access and seeds it."""
-    spreadsheet = get_spreadsheet(sheet_id)
-    if spreadsheet is None:
-        return {"ok": False, "error": "not_found_or_not_shared"}
+# def add_new_user(user_email: str, sheet_id: str) -> dict:
+#     """Run once when a user first connects their sheet. Verifies access and seeds it."""
+#     spreadsheet = get_spreadsheet(sheet_id)
+#     if spreadsheet is None:
+#         return {"ok": False, "error": "not_found_or_not_shared"}
 
-    save_user_sheet(user_email, sheet_id)
+#     save_user_sheet(user_email, sheet_id)
 
-    seed_spreadsheet(spreadsheet)
-    return {"ok": True, "spreadsheet_title": spreadsheet.title}
+#     seed_spreadsheet(spreadsheet)
+#     return {"ok": True, "spreadsheet_title": spreadsheet.title}
 
 
 def get_spreadsheet(sheet_id: str) -> gspread.Spreadsheet:
@@ -70,7 +73,8 @@ def get_worksheet_for_year(spreadsheet: gspread.Spreadsheet, year: str) -> gspre
         worksheet = spreadsheet.add_worksheet(
             title=year, rows=1000, cols=20, index=1)
         worksheet.update([HEADERS], "A1")
-        worksheet.format("A1:F1", {"textFormat": {"bold": True}, "backgroundColor": {
+        worksheet.format("A1:G1", {"textFormat": {"bold": True}, "backgroundColor": {  # CONFIDENCE: Change back when bot is done
+
                          "red": 0.26, "green": 0.53, "blue": 0.96}, })
 
     if worksheet.row_values(1) != HEADERS:
@@ -106,11 +110,12 @@ def format_instructions(default_worksheet: gspread.Worksheet) -> None:
     default_worksheet.format(
         "A1", {"textFormat": {"bold": True, "fontSize": 20}})
 
-    for cell in ["A5", "A10", "A17"]:
+    for cell in ["A5", "A10", "A18"]:  # CONFIDENCE: Change back when bot is done
         default_worksheet.format(
             cell, {"textFormat": {"bold": True, "fontSize": 14}})
     default_worksheet.format(
-        "A19", {"textFormat": {"bold": True, "foregroundColor": {"red": 0.92, "green": 0.26, "blue": 0.21}}})
+        # CONFIDENCE: Change back when bot is done
+        "A20", {"textFormat": {"bold": True, "foregroundColor": {"red": 0.92, "green": 0.26, "blue": 0.21}}})
 
 
 def parse_entry_date(date_str: str) -> datetime:
@@ -143,8 +148,9 @@ def maybe_insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime)
 def insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime, row_index: int) -> None:
     label = entry_dt.strftime("%B %Y")
     worksheet.append_row([f"— {label} —"], value_input_option="USER_ENTERED")
-    worksheet.merge_cells(f"A{row_index}:F{row_index}")
-    worksheet.format(f"A{row_index}:F{row_index}", {
+    # CONFIDENCE: Change back when bot is done
+    worksheet.merge_cells(f"A{row_index}:G{row_index}")
+    worksheet.format(f"A{row_index}:G{row_index}", {  # CONFIDENCE: Change back when bot is done
         "textFormat": {"bold": True},
         "horizontalAlignment": "CENTER",
         "backgroundColor": {"red": 0.93, "green": 0.93, "blue": 0.93},
@@ -156,6 +162,7 @@ def append_transaction(sheet_id: str, entry: dict):
     entry_dt = parse_entry_date(entry["date"])
     year = str(entry_dt.year)
     worksheet = get_worksheet_for_year(spreadsheet, year)
+    seed_spreadsheet(spreadsheet) #Remove once add_new_user is completed
 
     maybe_insert_month_divider(worksheet, entry_dt)
 
@@ -163,6 +170,7 @@ def append_transaction(sheet_id: str, entry: dict):
         entry["date"],
         entry["type"],
         entry["category"],
+        entry["confidence"],  # CONFIDENCE: Delete when bot is done
         entry["amount"],
         entry["currency"],
     ]

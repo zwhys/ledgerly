@@ -42,6 +42,6 @@ def parse_fields(fields: dict) -> dict:
 
 def parse_data(fields: dict) -> dict:
     data = parse_fields(fields)
-    data.pop("confidence")
+    # data.pop("confidence")
     data.pop("user_email")
     return data
