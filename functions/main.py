@@ -1,17 +1,16 @@
-from extract import get_users_and_bodies
-from parse_body import get_user_email_addr_and_fields
+from extract import get_all_message_info
+from parse_body import get_fields
 from parse_fields import parse_data
 from sheets import append_transaction
 from store import init_db, get_sheet_id_for_user
 
 
-if __name__ == "__main__":
+def main():
     init_db()
-    users_and_bodies = get_users_and_bodies()
+    all_message_info = get_all_message_info()
 
-    for user_and_body in users_and_bodies:
-        fields = get_user_email_addr_and_fields(user_and_body)
-        # print(fields) #Bug testing
+    for message_info in all_message_info:
+        fields = get_fields(message_info)
         if fields.get('date') and fields.get('amount') is None:
             continue
 
@@ -25,4 +24,9 @@ if __name__ == "__main__":
         entry = parse_data(fields)
         append_transaction(sheet_id, entry)
 
-#TODO: Optimise performance
+
+if __name__ == "__main__":
+    main()
+
+
+# TODO: Optimise performance
