@@ -91,9 +91,9 @@ def get_income_sentence(cleaned_body: str) -> dict:
     return result
 
 
-def get_fields(body: str) -> dict:
+def extract_fields(body: str) -> dict:
+    '''Extract fields from body'''
     cleaned_body = clean_body(body)
-    # print(cleaned_body) #Bug testing
     fields = get_expense_block(cleaned_body)
 
     for extractor in (get_income_block, get_income_sentence):
@@ -112,12 +112,12 @@ def get_email_addr(text):
     return match.group(1) if match else None
 
 
-def get_user_email_addr_and_fields(user_and_body: dict[str, str]):
+def get_fields(user_and_body: dict[str, str]):
     '''Get user email address from user and merge it with fields'''
     body = user_and_body['body']
     user = user_and_body['user']
     full_date = user_and_body['date']
-    fields = get_fields(body)
+    fields = extract_fields(body)
     user_email = get_email_addr(user)
     fields['user_email'] = user_email
     fields['full_date'] = full_date

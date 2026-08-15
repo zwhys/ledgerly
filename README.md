@@ -1,6 +1,6 @@
 # LedgerlyBot
 
-Ledgerly is a Gmail-polling ETL pipeline that categorizes **DBS** bank transactions via an LLM and stores them in Google Sheets
+Ledgerly is a personal-finance ETL pipeline that reads DBS bank transaction alert emails out of Gmail, uses an LLM to categorize each one, and stores them in Google Sheet
 
 ## Setup
 

@@ -15,6 +15,7 @@ def get_connection():
 
 
 def init_db():
+    '''Initialise database if non-existent'''
     with get_connection() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS users (

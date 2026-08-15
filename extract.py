@@ -25,44 +25,65 @@ def mark_emails_as_read(service, response_message_ids):
     return
 
 
-def get_users_and_bodies() -> list[dict[str, str]]:
-    '''Get user of service and body of email of all unread emails'''
+def parse_message(full_message: dict[str, str]) -> dict[str, str]:
+    message_payload: dict[str, Any] = full_message.get('payload', {})
+    payload_parts: list[dict] = message_payload.get('parts', [])
+    payload_headers: list[dict] = message_payload.get('headers', [])
+
+    user = ''
+    full_date = ''
+
+    for header in payload_headers:
+        if header['name'] == 'From':
+            user = header['value']
+        elif header['name'] == 'Date':
+            full_date = header['value']
+
+    body = ''
+
+    for part in payload_parts:
+        if part['mimeType'] == 'text/html':
+            data = part['body'].get('data', '')
+            body = base64.urlsafe_b64decode(data).decode('utf-8')
+            break
+
+    return {
+        'user': user,
+        'body': body,
+        'date': full_date
+    }
+
+
+def get_message_info(service, message_id: str) -> dict[str, str]:
+    """Get the user, body, and date of one email."""
+    full_message = service.users().messages().get(
+        userId='me',
+        id=message_id
+    ).execute()
+
+    message_info = parse_message(full_message)
+
+    return message_info
+
+
+def get_all_message_info() -> list[dict[str, str]]:
+    """Get the user, body, and date of all unread emails."""
+
     creds = get_credentials()
     service = build('gmail', 'v1', credentials=creds)
     response = get_response(service)
-    response_messages: list[dict[str, str]] = response.get('messages', [])
 
+    response_messages: list[dict[str, str]] = response.get('messages', [])
+    all_message_info: list[dict[str, str]] = []
     response_message_ids: list[str] = []
-    users_and_bodies: list[dict[str, str]] = []
 
     for message in response_messages:
-        full_message = service.users().messages().get(
-            userId='me', id=message['id']).execute()
-
-        message_payload: dict[str, Any] = full_message.get('payload', {})
-        payload_parts: list[dict] = message_payload.get('parts', [])
-        payload_headers: list[dict] = message_payload.get('headers', [])
-
-        user = ''
-        full_date = ''
-        for header in payload_headers:
-            if header['name'] == 'From':
-                user = header['value']
-            if header['name'] == 'Date':
-                full_date = header['value']
-
-        body = ''
-        for msg_data_part in payload_parts:
-            if msg_data_part['mimeType'] == 'text/html':
-                data = msg_data_part['body'].get('data', '')
-                body = base64.urlsafe_b64decode(data).decode('utf-8')
-                break
-
-        users_and_bodies.append(
-            {'user': user, 'body': body, 'date': full_date})
-        response_message_ids.append(message['id'])
+        message_info = get_message_info(service, message['id'])
+        all_message_info.append(message_info)
 
     mark_emails_as_read(service, response_message_ids)
-    return users_and_bodies
+
+    return all_message_info
+
 
 # TODO: Make it so that it runs everytime there is a new email being forwarded into the inbox
