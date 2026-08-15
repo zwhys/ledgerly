@@ -19,7 +19,7 @@ def format_date(date: str, full_date: str) -> str:
 
     return (
         f"{date_dt.day:02d}/{date_dt.month:02d}/{full_date_dt.year} "
-        f"{full_date_dt.strftime('%H:%M:%S')} (SGT)"
+        f"{date_dt.strftime('%H:%M')}:{full_date_dt.second:02d} (SGT)"
     )  # TODO: Look at effect on overseas transitions
 
 
