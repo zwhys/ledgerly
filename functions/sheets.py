@@ -1,9 +1,9 @@
 from datetime import datetime
+import json
+import os
 import re
 import gspread
 from google.oauth2.service_account import Credentials
-
-from store import save_user_sheet
 
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -40,10 +40,19 @@ _client = None
 
 def get_client() -> gspread.Client:
     global _client
+
     if _client is None:
-        creds = Credentials.from_service_account_file(
-            "service_account.json", scopes=SCOPES)
+        service_account_info = json.loads(
+            os.environ["GOOGLE_SERVICE_ACCOUNT"]
+        )
+
+        creds = Credentials.from_service_account_info(
+            service_account_info,
+            scopes=SCOPES,
+        )
+
         _client = gspread.authorize(creds)
+
     return _client
 
 
@@ -162,7 +171,7 @@ def append_transaction(sheet_id: str, entry: dict):
     entry_dt = parse_entry_date(entry["date"])
     year = str(entry_dt.year)
     worksheet = get_worksheet_for_year(spreadsheet, year)
-    seed_spreadsheet(spreadsheet) #Remove once add_new_user is completed
+    seed_spreadsheet(spreadsheet)  # Remove once add_new_user is completed
 
     maybe_insert_month_divider(worksheet, entry_dt)
 

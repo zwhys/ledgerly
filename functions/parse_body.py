@@ -107,18 +107,9 @@ def extract_fields(body: str) -> dict:
     return fields
 
 
-def get_email_addr(text):
-    match = re.search(r"<([^>]+)>", text)
-    return match.group(1) if match else None
-
-
-def get_fields(user_and_body: dict[str, str]):
+def get_fields(message_info: dict[str, str]):
     '''Get user email address from user and merge it with fields'''
-    body = user_and_body['body']
-    user = user_and_body['user']
-    full_date = user_and_body['date']
-    fields = extract_fields(body)
-    user_email = get_email_addr(user)
-    fields['user_email'] = user_email
-    fields['full_date'] = full_date
+    fields = extract_fields(message_info['body'])
+    fields['user_email'] = message_info['user_email']
+    fields['full_date'] = message_info['date']
     return fields

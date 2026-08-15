@@ -1,16 +1,20 @@
+import os
+from dotenv import load_dotenv
 from googleapiclient.discovery import build
 import base64
 from typing import Any
 
 from auth import get_credentials
 
+load_dotenv()
+
+ENV = os.getenv("ENV", "dev")
+
 
 def get_response(service) -> dict[str, Any]:
     '''Get unread emails'''
-    # response: dict[str, Any] = service.users().messages().list(
-    #     userId='me', q='is:unread').execute() #!for production
     response: dict[str, Any] = service.users().messages().list(
-        userId='me').execute()  # !for testing
+        userId='me', q='is:unread').execute()
     return response
 
 
@@ -30,12 +34,12 @@ def parse_message(full_message: dict[str, str]) -> dict[str, str]:
     payload_parts: list[dict] = message_payload.get('parts', [])
     payload_headers: list[dict] = message_payload.get('headers', [])
 
-    user = ''
+    user_email = ''
     full_date = ''
 
     for header in payload_headers:
-        if header['name'] == 'From':
-            user = header['value']
+        if header['name'] == 'Delivered-To':
+            user_email = header['value']
         elif header['name'] == 'Date':
             full_date = header['value']
 
@@ -48,14 +52,14 @@ def parse_message(full_message: dict[str, str]) -> dict[str, str]:
             break
 
     return {
-        'user': user,
+        'user_email': user_email,
         'body': body,
         'date': full_date
     }
 
 
 def get_message_info(service, message_id: str) -> dict[str, str]:
-    """Get the user, body, and date of one email."""
+    """Get the user email, body, and date of one email."""
     full_message = service.users().messages().get(
         userId='me',
         id=message_id
@@ -67,7 +71,7 @@ def get_message_info(service, message_id: str) -> dict[str, str]:
 
 
 def get_all_message_info() -> list[dict[str, str]]:
-    """Get the user, body, and date of all unread emails."""
+    """Get the user email, body, and date of all unread emails."""
 
     creds = get_credentials()
     service = build('gmail', 'v1', credentials=creds)
@@ -81,7 +85,8 @@ def get_all_message_info() -> list[dict[str, str]]:
         message_info = get_message_info(service, message['id'])
         all_message_info.append(message_info)
 
-    mark_emails_as_read(service, response_message_ids)
+    if ENV == "prod":
+        mark_emails_as_read(service, response_message_ids)
 
     return all_message_info
 
