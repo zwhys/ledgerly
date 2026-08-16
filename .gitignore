@@ -1,12 +1,3 @@
-.env
-credentials.json
-token.json
-service_account.json
-
+telegrambot/
 
 .DS_Store
-.venv/
-__pycache__/
-mailTemplates/
-telegrambot/
-secrets/

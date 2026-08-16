@@ -103,6 +103,7 @@ def get_all_message_info() -> list[dict[str, str]]:
     response = get_response(session)
 
     response_messages: list[dict[str, str]] = response.get("messages", [])
+    response_messages.reverse()  # Get the messages in chronological order
 
     all_message_info: list[dict[str, str]] = []
     response_message_ids: list[str] = []
