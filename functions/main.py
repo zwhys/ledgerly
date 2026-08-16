@@ -2,7 +2,7 @@ from extract import get_all_message_info
 from parse_body import get_fields
 from parse_fields import parse_data
 from sheets import append_transaction
-from store import init_db, get_sheet_id_for_user
+from database import init_db, get_sheet_id_for_user
 
 
 def main(event, context):
@@ -31,7 +31,9 @@ def main(event, context):
 
 
 if __name__ == "__main__":
+    # event = context = None
+    # main(event, context)
     main()
 
 
-# TODO: Optimise performance
+# TODO: Optimise performance (promises and parallel processing)
