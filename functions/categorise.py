@@ -1,7 +1,7 @@
+import os
 from typing import Any
 from openai import OpenAI
 import json
-from dotenv import load_dotenv
 
 EXPENSE_CATEGORIES = [
     "Food",
@@ -17,9 +17,11 @@ INCOME_CATEGORIES = [
     "Bonus",
 ]
 
-load_dotenv()
-client = OpenAI()
+ENV = os.getenv("ENV", "dev")
 
+if ENV == "dev":
+    from dotenv import load_dotenv
+    load_dotenv()
 
 def extract_communicator(fields: dict) -> dict[str, Any]:
     recipient: str = fields['to']
@@ -50,7 +52,7 @@ def categorise(fields: dict) -> dict:
            {merchant}
            """
 
-    response = client.responses.create(
+    response = OpenAI().responses.create(
         model="gpt-4.1-nano",
         input=prompt,
         text={

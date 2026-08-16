@@ -1,94 +1,126 @@
 import os
-from dotenv import load_dotenv
-from googleapiclient.discovery import build
 import base64
 from typing import Any
-
+from google.auth.transport.requests import AuthorizedSession
 from auth import get_credentials
 
-load_dotenv()
 
 ENV = os.getenv("ENV", "dev")
 
+if ENV == "dev":
+    from dotenv import load_dotenv
+    load_dotenv()
 
-def get_response(service) -> dict[str, Any]:
-    '''Get unread emails'''
-    response: dict[str, Any] = service.users().messages().list(
-        userId='me', q='is:unread').execute()
-    return response
-
-
-def mark_emails_as_read(service, response_message_ids):
-    service.users().messages().batchModify(
-        userId='me',
-        body={
-            'ids': response_message_ids,
-            'removeLabelIds': ['UNREAD']
-        }
-    ).execute()
-    return
+GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me"
 
 
-def parse_message(full_message: dict[str, str]) -> dict[str, str]:
-    message_payload: dict[str, Any] = full_message.get('payload', {})
-    payload_parts: list[dict] = message_payload.get('parts', [])
-    payload_headers: list[dict] = message_payload.get('headers', [])
+def get_response(session: AuthorizedSession) -> dict:
+    response = session.get(
+        f"{GMAIL_API}/messages",
+        params={"q": "is:unread"},
+    )
 
-    user_email = ''
-    full_date = ''
+    response.raise_for_status()
+    return response.json()
+
+
+def mark_emails_as_read(
+    session: AuthorizedSession,
+    response_message_ids: list[str],
+) -> None:
+    """Mark all specified emails as read."""
+
+    if not response_message_ids:
+        return
+
+    response = session.post(
+        f"{GMAIL_API}/messages/batchModify",
+        json={
+            "ids": response_message_ids,
+            "removeLabelIds": ["UNREAD"],
+        },
+    )
+
+    response.raise_for_status()
+
+
+def parse_message(full_message: dict[str, Any]) -> dict[str, str]:
+    message_payload = full_message.get("payload", {})
+    payload_parts = message_payload.get("parts", [])
+    payload_headers = message_payload.get("headers", [])
+
+    user_email = ""
+    full_date = ""
 
     for header in payload_headers:
-        if header['name'] == 'Delivered-To':
-            user_email = header['value']
-        elif header['name'] == 'Date':
-            full_date = header['value']
+        if header["name"] == "Delivered-To":
+            user_email = header["value"]
+        elif header["name"] == "Date":
+            full_date = header["value"]
 
-    body = ''
+    body = ""
 
     for part in payload_parts:
-        if part['mimeType'] == 'text/html':
-            data = part['body'].get('data', '')
-            body = base64.urlsafe_b64decode(data).decode('utf-8')
+        if part.get("mimeType") == "text/html":
+            data = part.get("body", {}).get("data", "")
+
+            if data:
+                body = base64.urlsafe_b64decode(data).decode("utf-8")
+
             break
 
     return {
-        'user_email': user_email,
-        'body': body,
-        'date': full_date
+        "user_email": user_email,
+        "body": body,
+        "date": full_date,
     }
 
 
-def get_message_info(service, message_id: str) -> dict[str, str]:
+def get_message_info(
+    session: AuthorizedSession,
+    message_id: str,
+) -> dict[str, str]:
     """Get the user email, body, and date of one email."""
-    full_message = service.users().messages().get(
-        userId='me',
-        id=message_id
-    ).execute()
 
-    message_info = parse_message(full_message)
+    response = session.get(
+        f"{GMAIL_API}/messages/{message_id}",
+        params={"format": "full"},
+    )
 
-    return message_info
+    response.raise_for_status()
+
+    full_message = response.json()
+
+    return parse_message(full_message)
 
 
 def get_all_message_info() -> list[dict[str, str]]:
     """Get the user email, body, and date of all unread emails."""
 
     creds = get_credentials()
-    service = build('gmail', 'v1', credentials=creds)
-    response = get_response(service)
+    session = AuthorizedSession(creds)
 
-    response_messages: list[dict[str, str]] = response.get('messages', [])
+    response = get_response(session)
+
+    response_messages: list[dict[str, str]] = response.get("messages", [])
+
     all_message_info: list[dict[str, str]] = []
     response_message_ids: list[str] = []
 
     for message in response_messages:
-        message_info = get_message_info(service, message['id'])
+        message_id = message["id"]
+
+        message_info = get_message_info(
+            session,
+            message_id,
+        )
+
         all_message_info.append(message_info)
+        response_message_ids.append(message_id)
 
     if ENV == "prod":
-        mark_emails_as_read(service, response_message_ids)
-
+        mark_emails_as_read(
+            session,
+            response_message_ids,
+        )
     return all_message_info
-
-
-# TODO: Make it so that it runs everytime there is a new email being forwarded into the inbox

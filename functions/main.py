@@ -5,7 +5,7 @@ from sheets import append_transaction
 from store import init_db, get_sheet_id_for_user
 
 
-def main():
+def main(event, context):
     init_db()
     all_message_info = get_all_message_info()
 
@@ -23,6 +23,11 @@ def main():
 
         entry = parse_data(fields)
         append_transaction(sheet_id, entry)
+
+    return {
+        "statusCode": 200,
+        "body": "Lambda SUCCESS"
+    }
 
 
 if __name__ == "__main__":
