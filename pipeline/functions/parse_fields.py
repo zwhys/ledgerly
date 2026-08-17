@@ -2,8 +2,7 @@ from typing import Any
 import re
 from datetime import datetime
 
-
-from categorise import categorise
+from categorise import categorise_all
 
 
 def format_date(date: str, full_date: str) -> str:
@@ -23,8 +22,8 @@ def format_date(date: str, full_date: str) -> str:
     )  # TODO: Look at effect on overseas transitions
 
 
-def parse_fields(fields: dict) -> dict:
-    category_and_confidence = categorise(fields)
+def parse_fields(fields: dict, category_and_confidence: dict) -> dict:
+    '''Now takes the category/confidence as an argument instead of computing it itself'''
     match = re.match(r"([A-Za-z]+)\s*([\d.]+)", fields["amount"])
 
     data: dict[str, Any] = {
@@ -40,8 +39,15 @@ def parse_fields(fields: dict) -> dict:
     return data
 
 
-def parse_data(fields: dict) -> dict:
-    data = parse_fields(fields)
-    # data.pop("confidence")
-    data.pop("user_email")
-    return data
+def parse_data_all(fields: list[dict]) -> list[dict]:
+    '''Batches categorisation in parallel, then parses each message using its result'''
+    categories_and_confidences = categorise_all(fields)
+
+    results = []
+    for fields, category_and_confidence in zip(fields, categories_and_confidences):
+        data = parse_fields(fields, category_and_confidence)
+        # data.pop("confidence")
+        data.pop("user_email")
+        results.append(data)
+
+    return results
