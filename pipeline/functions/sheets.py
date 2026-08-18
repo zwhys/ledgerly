@@ -36,6 +36,8 @@ INSTRUCTIONS_CONTENT = [
 ]
 
 _client = None
+_spreadsheets = {}
+_worksheets = {}
 
 
 def get_client() -> gspread.Client:
@@ -69,26 +71,35 @@ def get_client() -> gspread.Client:
 
 
 def get_spreadsheet(sheet_id: str) -> gspread.Spreadsheet:
-    client = get_client()
-    spreadsheet = client.open_by_key(sheet_id)
-    return spreadsheet
+    if sheet_id not in _spreadsheets:
+        _spreadsheets[sheet_id] = get_client().open_by_key(sheet_id)
+
+    return _spreadsheets[sheet_id]
 
 
-def get_worksheet_for_year(spreadsheet: gspread.Spreadsheet, year: str) -> gspread.Worksheet:
+def get_worksheet_for_year(
+    spreadsheet: gspread.Spreadsheet,
+    year: str,
+) -> gspread.Worksheet:
     """Get (or create) the worksheet for a given year, with headers."""
+
+    key = (spreadsheet.id, year)
+
+    if key in _worksheets:
+        return _worksheets[key]
+
     try:
         worksheet = spreadsheet.worksheet(year)
     except gspread.WorksheetNotFound:
         worksheet = spreadsheet.add_worksheet(
-            title=year, rows=1000, cols=20, index=1)
-        worksheet.update([HEADERS], "A1")
-        worksheet.format("A1:G1", {"textFormat": {"bold": True}, "backgroundColor": {  # CONFIDENCE: Change back when bot is done
-
-                         "red": 0.26, "green": 0.53, "blue": 0.96}, })
-
-    if worksheet.row_values(1) != HEADERS:
+            title=year,
+            rows=1000,
+            cols=20,
+            index=1,
+        )
         worksheet.update([HEADERS], "A1")
 
+    _worksheets[key] = worksheet
     return worksheet
 
 
@@ -133,6 +144,7 @@ def parse_entry_date(date_str: str) -> datetime:
 
 
 def maybe_insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime) -> None:
+    # TODO: Optimise this (Don't get all values)
     all_values = worksheet.get_all_values()
 
     if len(all_values) <= 1:
