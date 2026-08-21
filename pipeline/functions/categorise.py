@@ -88,9 +88,10 @@ def categorise_all(messages: list[dict], max_workers: int = 5) -> list[dict]:
                 categories_and_confidences[i] = future.result()
             except Exception as e:
                 categories_and_confidences[i] = {"category": "Other",
-                              "confidence": "low", "error": str(e)}
+                                                 "confidence": "low", "error": str(e)}
 
     return categories_and_confidences
 
 
 # TODO: Add error handling (Mark as read only after classification is done)
+# TODO: Make category automatically others when confidence is low
