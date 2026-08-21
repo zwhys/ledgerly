@@ -1,4 +1,12 @@
-telegrambot/
-runtimes/
-.DS_Store
 ledgerly.code-workspace
+.env
+.DS_Store
+.venv/
+__pycache__/
+secrets/
+
+credentials.json
+token.json
+service_account.json
+
+bot.txt
