@@ -58,18 +58,6 @@ def get_client() -> gspread.Client:
     return _client
 
 
-# def add_new_user(user_email: str, sheet_id: str) -> dict:
-#     """Run once when a user first connects their sheet. Verifies access and seeds it."""
-#     spreadsheet = get_spreadsheet(sheet_id)
-#     if spreadsheet is None:
-#         return {"ok": False, "error": "not_found_or_not_shared"}
-
-#     save_user_sheet(user_email, sheet_id)
-
-#     seed_spreadsheet(spreadsheet)
-#     return {"ok": True, "spreadsheet_title": spreadsheet.title}
-
-
 def get_spreadsheet(sheet_id: str) -> gspread.Spreadsheet:
     if sheet_id not in _spreadsheets:
         _spreadsheets[sheet_id] = get_client().open_by_key(sheet_id)
@@ -183,7 +171,6 @@ def append_transaction(sheet_id: str, entry: dict):
     entry_dt = parse_entry_date(entry["date"])
     year = str(entry_dt.year)
     worksheet = get_worksheet_for_year(spreadsheet, year)
-    seed_spreadsheet(spreadsheet)  # Remove once add_new_user is completed
 
     maybe_insert_month_divider(worksheet, entry_dt)
 

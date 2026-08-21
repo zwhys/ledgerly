@@ -1,7 +1,7 @@
 import re
 from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler
-from pipeline.database import save_user_email, save_user_sheet, get_email_for_chat
+from pipeline.database import add_new_user, save_user_email, get_email_for_chat
 
 AWAITING_EMAIL, AWAITING_SHEET_URL = range(2)
 
@@ -62,7 +62,7 @@ async def receive_sheet_url(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         )
         return ConversationHandler.END
 
-    save_user_sheet(user_email, sheet_id)
+    add_new_user(user_email, sheet_id)
 
     await update.message.reply_text("✅ Got it, sheet connected!")
     return ConversationHandler.END

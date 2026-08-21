@@ -19,7 +19,6 @@ def main(event, context):
 
         user_email = fields.get("user_email")
         sheet_id = get_sheet_id_for_user(user_email)
-        # add_new_user(user_email, sheet_id) #TODO: Fix when telegram bot works
 
         if sheet_id is None:
             continue

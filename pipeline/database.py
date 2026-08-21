@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 import gspread
-from sheets import get_spreadsheet
+from pipeline.sheets import get_spreadsheet, seed_spreadsheet
 
 WORKSHEET_NAME = "users"
 HEADERS = ["user_email", "sheet_id", "chat_id"]
@@ -70,6 +70,17 @@ def save_user_sheet(user_email: str, sheet_id: str) -> None:
         worksheet.append_row([user_email, sheet_id, ""])
 
     _user_sheet_ids[user_email] = sheet_id
+
+def add_new_user(user_email: str, sheet_id: str) -> dict:
+    """Run once when a user first connects their sheet. Verifies access and seeds it."""
+    spreadsheet = get_spreadsheet(sheet_id)
+    if spreadsheet is None:
+        return {"ok": False, "error": "not_found_or_not_shared"}
+
+    save_user_sheet(user_email, sheet_id)
+
+    seed_spreadsheet(spreadsheet)
+    return {"ok": True, "spreadsheet_title": spreadsheet.title}
 
 
 def get_sheet_id_for_user(user_email: str) -> Optional[str]:
