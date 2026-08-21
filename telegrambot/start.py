@@ -1,9 +1,18 @@
 import re
-from telegram import Update
+from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler
 from pipeline.database import add_new_user, save_user_email, get_email_for_chat
 
 AWAITING_EMAIL, AWAITING_SHEET_URL = range(2)
+
+MAIN_KEYBOARD = ReplyKeyboardMarkup(
+    [
+        ["Update particulars", "Edit Categories"],
+        ["Add transaction"],
+    ],
+    resize_keyboard=True,
+    one_time_keyboard=False,
+)
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -14,6 +23,7 @@ def extract_sheet_id(url: str) -> str | None:
 
 
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    '''Welcomes user, asks for email then google sheets'''
     await update.message.reply_text(
         "Hi! I'm the Ledgerly bot. To connect this chat to your account, "
         "please send me the email address you use for Ledgerly:"
@@ -64,7 +74,10 @@ async def receive_sheet_url(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
     add_new_user(user_email, sheet_id)
 
-    await update.message.reply_text("✅ Got it, sheet connected!")
+    await update.message.reply_text(
+        "✅ Got it, sheet connected! Use the buttons below to get started.",
+        reply_markup=MAIN_KEYBOARD,
+    )
     return ConversationHandler.END
 
 
