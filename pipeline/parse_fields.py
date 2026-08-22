@@ -33,7 +33,7 @@ def parse_fields(fields: dict, category_and_confidence: dict) -> dict:
         "amount": match.group(2),
         "currency": match.group(1),
         "confidence": category_and_confidence["confidence"],
-        "user_email": fields["user_email"]
+        "email": fields["email"]
     }
 
     return data
@@ -47,7 +47,7 @@ def parse_data_all(fields: list[dict]) -> list[dict]:
     for fields, category_and_confidence in zip(fields, categories_and_confidences):
         data = parse_fields(fields, category_and_confidence)
         # data.pop("confidence")
-        data.pop("user_email")
+        data.pop("email")
         results.append(data)
 
     return results

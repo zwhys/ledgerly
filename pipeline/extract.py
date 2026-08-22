@@ -49,12 +49,12 @@ def parse_message(full_message: dict[str, Any]) -> dict[str, str]:
     payload_parts = message_payload.get("parts", [])
     payload_headers = message_payload.get("headers", [])
 
-    user_email = ""
+    email = ""
     full_date = ""
 
     for header in payload_headers:
         if header["name"] == "Delivered-To":
-            user_email = header["value"]
+            email = header["value"]
         elif header["name"] == "Date":
             full_date = header["value"]
 
@@ -70,7 +70,7 @@ def parse_message(full_message: dict[str, Any]) -> dict[str, str]:
             break
 
     return {
-        "user_email": user_email,
+        "email": email,
         "body": body,
         "date": full_date,
     }

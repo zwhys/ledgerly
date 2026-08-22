@@ -110,6 +110,6 @@ def extract_fields(body: str) -> dict:
 def get_fields(message_info: dict[str, str]):
     '''Get user email address from user and merge it with fields'''
     fields = extract_fields(message_info['body'])
-    fields['user_email'] = message_info['user_email']
+    fields['email'] = message_info['email']
     fields['full_date'] = message_info['date']
     return fields

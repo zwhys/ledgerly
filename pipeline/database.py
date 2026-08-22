@@ -4,11 +4,11 @@ import gspread
 from pipeline.sheets import get_spreadsheet, seed_spreadsheet
 
 WORKSHEET_NAME = "users"
-HEADERS = ["user_email", "sheet_id", "chat_id"]
+HEADERS = ["chat_id", "email", "sheet_id"]
 
-COL_EMAIL = 1
-COL_SHEET_ID = 2
-COL_CHAT_ID = 3
+COL_CHAT_ID = 1
+COL_EMAIL = 2
+COL_SHEET_ID = 3
 
 
 _db_worksheet: gspread.Worksheet | None = None
@@ -39,56 +39,57 @@ def get_db_worksheet() -> gspread.Worksheet:
     return worksheet
 
 
-def find_db_row(worksheet: gspread.Worksheet, user_email: str) -> Optional[int]:
-    """Return the 1-indexed row number for user_email, or None if not found."""
+def find_db_row(worksheet: gspread.Worksheet, chat_id) -> Optional[int]:
+    """Return the 1-indexed row number for chat_id, or None if not found."""
     try:
-        cell = worksheet.find(user_email, in_column=COL_EMAIL)
-    except gspread.exceptions.CellNotFound:
+        cell = worksheet.find(chat_id, in_column=COL_CHAT_ID)
+    except ValueError:
         return None
     return cell.row if cell else None
 
 
-def save_user_email(user_email: str, chat_id: int) -> None:
-    """Create or update a row for this user, recording their chat_id."""
+def save_email(chat_id: str, email: str) -> None:
+    """Create or update a row for this user, recording their email."""
     worksheet = get_db_worksheet()
-    row = find_db_row(worksheet, user_email)
+    row = find_db_row(worksheet, chat_id)
 
     if row is not None:
-        worksheet.update(f"C{row}", [[chat_id]])
+        worksheet.update(f"B{row}", [[email]])
     else:
-        worksheet.append_row([user_email, "", chat_id])
+        worksheet.append_row([chat_id, email, ""])
 
 
-def save_user_sheet(user_email: str, sheet_id: str) -> None:
+def save_user_sheet(chat_id: str, sheet_id: str) -> None:
     worksheet = get_db_worksheet()
 
-    row = find_db_row(worksheet, user_email)
+    row = find_db_row(worksheet, chat_id)
 
     if row is not None:
-        worksheet.update(f"B{row}", [[sheet_id]])
+        worksheet.update(f"C{row}", [[sheet_id]])
     else:
-        worksheet.append_row([user_email, sheet_id, ""])
+        worksheet.append_row([chat_id, "", sheet_id])
 
-    _user_sheet_ids[user_email] = sheet_id
+    _user_sheet_ids[chat_id] = sheet_id
 
-def add_new_user(user_email: str, sheet_id: str) -> dict:
+
+def connect_user_sheet(chat_id: str, sheet_id: str) -> dict:
     """Run once when a user first connects their sheet. Verifies access and seeds it."""
     spreadsheet = get_spreadsheet(sheet_id)
     if spreadsheet is None:
         return {"ok": False, "error": "not_found_or_not_shared"}
 
-    save_user_sheet(user_email, sheet_id)
+    save_user_sheet(chat_id, sheet_id)
 
     seed_spreadsheet(spreadsheet)
     return {"ok": True, "spreadsheet_title": spreadsheet.title}
 
 
-def get_sheet_id_for_user(user_email: str) -> Optional[str]:
-    if user_email in _user_sheet_ids:
-        return _user_sheet_ids[user_email]
+def get_sheet_id_for_user(chat_id: str) -> Optional[str]:
+    if chat_id in _user_sheet_ids:
+        return _user_sheet_ids[chat_id]
 
     worksheet = get_db_worksheet()
-    row = find_db_row(worksheet, user_email)
+    row = find_db_row(worksheet, chat_id)
 
     if row is None:
         return None
@@ -96,18 +97,16 @@ def get_sheet_id_for_user(user_email: str) -> Optional[str]:
     sheet_id = worksheet.cell(row, COL_SHEET_ID).value
 
     if sheet_id:
-        _user_sheet_ids[user_email] = sheet_id
+        _user_sheet_ids[chat_id] = sheet_id
 
     return sheet_id
 
 
-def get_email_for_chat(chat_id: int) -> Optional[str]:
-    """Reverse lookup: given a chat_id, find the linked user_email."""
+def get_email_for_chat(chat_id: str) -> Optional[str]:
     worksheet = get_db_worksheet()
-    try:
-        cell = worksheet.find(str(chat_id), in_column=COL_CHAT_ID)
-    except gspread.exceptions.CellNotFound:
+    row = find_db_row(worksheet, chat_id)
+
+    if row is None:
         return None
-    if cell is None:
-        return None
-    return worksheet.cell(cell.row, COL_EMAIL).value
+
+    return worksheet.cell(row, COL_EMAIL).value

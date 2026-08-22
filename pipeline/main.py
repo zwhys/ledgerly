@@ -17,8 +17,8 @@ def main(event, context):
         if fields.get('date') and fields.get('amount') is None:
             continue
 
-        user_email = fields.get("user_email")
-        sheet_id = get_sheet_id_for_user(user_email)
+        email = fields.get("email")
+        sheet_id = get_sheet_id_for_user(email)
 
         if sheet_id is None:
             continue
