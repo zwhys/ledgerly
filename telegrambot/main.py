@@ -6,7 +6,6 @@ from telegram.ext import (
 )
 from dotenv import load_dotenv
 
-from telegrambot.add_transactions import add_transaction_handler, handle_add_transaction
 from telegrambot.update_particulars import handle_update_particulars, onboarding_handler, update_particulars_handler
 
 load_dotenv()
@@ -33,9 +32,6 @@ def main():
     application.add_handler(update_particulars_handler)
     application.add_handler(MessageHandler(filters.Text(
         ["Update particulars"]), handle_update_particulars))
-    application.add_handler(add_transaction_handler)
-    application.add_handler(MessageHandler(filters.Text(
-        ["Add transaction"]), handle_add_transaction))
 
     application.run_polling()
 
