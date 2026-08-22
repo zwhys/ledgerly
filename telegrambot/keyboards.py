@@ -2,10 +2,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMa
 
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
-    [
-        ["Update particulars", "Edit Categories"],
-        ["Add transaction"],
-    ],
+    [["Update particulars", "Add transaction"]],
     resize_keyboard=True,
     one_time_keyboard=False,
 )
@@ -16,4 +13,9 @@ PARTICULARS_INLINE = InlineKeyboardMarkup([
     [InlineKeyboardButton("Change Google Sheet",
                           callback_data="update_sheets")],
     [InlineKeyboardButton("Cancel", callback_data="cancel_particulars")]
+])
+
+CANCEL_PARTICULARS_INLINE = InlineKeyboardMarkup([[InlineKeyboardButton(
+    "Cancel",
+    callback_data="cancel_particulars")]
 ])

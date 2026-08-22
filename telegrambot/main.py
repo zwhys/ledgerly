@@ -6,7 +6,8 @@ from telegram.ext import (
 )
 from dotenv import load_dotenv
 
-from telegrambot.update_particulars import handle_update_particulars, update_particulars_handler
+from telegrambot.add_transactions import add_transaction_handler, handle_add_transaction
+from telegrambot.update_particulars import handle_update_particulars, onboarding_handler, update_particulars_handler
 
 load_dotenv()
 
@@ -24,14 +25,7 @@ def main():
         .build()
     )
 
-    # edit_categories_handler = MessageHandler(filters.Text(
-    #     ["Edit Categories"]), handle_edit_categories)
-    # add_transaction_handler = MessageHandler(filters.Text(
-    #     ["Add transaction"]), handle_add_transaction)
-    # back_to_menu_handler = MessageHandler(
-    #     filters.Text(["« Back to menu"]), handle_back_to_menu)
-
-    # application.add_handler(onboarding_handler)
+    application.add_handler(onboarding_handler)
     # Commented out for easier testing
 
     # Reply-keyboard button handlers (only reached once a user is
@@ -39,10 +33,9 @@ def main():
     application.add_handler(update_particulars_handler)
     application.add_handler(MessageHandler(filters.Text(
         ["Update particulars"]), handle_update_particulars))
-
-    # application.add_handler(edit_categories_handler)
-    # application.add_handler(add_transaction_handler)
-    # application.add_handler(back_to_menu_handler)
+    application.add_handler(add_transaction_handler)
+    application.add_handler(MessageHandler(filters.Text(
+        ["Add transaction"]), handle_add_transaction))
 
     application.run_polling()
 

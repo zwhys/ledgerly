@@ -4,7 +4,7 @@ from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, Con
 
 from pipeline.database import connect_user_sheet, save_email, save_user_sheet
 from telegrambot.global_commands import start_cmd, cancel_cmd
-from telegrambot.keyboards import MAIN_KEYBOARD, PARTICULARS_INLINE
+from telegrambot.keyboards import CANCEL_PARTICULARS_INLINE, MAIN_KEYBOARD, PARTICULARS_INLINE
 from telegrambot.states import AWAITING_EMAIL, AWAITING_SHEET_URL, AWAITING_NEW_EMAIL, AWAITING_NEW_SHEET_URL
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -27,23 +27,18 @@ async def handle_update_particulars(update: Update, context: ContextTypes.DEFAUL
 async def update_email(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-    await query.edit_message_text("Enter your new email address:")
+    await query.edit_message_text("Enter your new email address:",
+                                  reply_markup=CANCEL_PARTICULARS_INLINE)
+
     return AWAITING_NEW_EMAIL
 
 
 async def update_sheets(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-    await query.edit_message_text("Enter the new Google Sheets URL:")
+    await query.edit_message_text("Enter the new Google Sheets URL:",
+                                  reply_markup=CANCEL_PARTICULARS_INLINE)
     return AWAITING_NEW_SHEET_URL
-
-
-async def particulars_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    '''Cancels out of the submenu — no text change needed, just closes the buttons.'''
-    query = update.callback_query
-    await query.answer()
-    await query.edit_message_text("Okay, nothing changed.")
-    return ConversationHandler.END
 
 
 async def receive_email(
@@ -94,7 +89,7 @@ async def receive_sheet_url(
     chat_id = str(update.effective_chat.id)
 
     if is_new_sheet:
-        save_user_sheet(chat_id, sheet_id)
+        # save_user_sheet(chat_id, sheet_id) Commented out for dev
 
         await update.message.reply_text(
             "✅ Google Sheet updated."
@@ -126,7 +121,7 @@ async def cancel_particulars(
     query = update.callback_query
 
     await query.answer()
-    await query.edit_message_text("Okay, cancelled.")
+    await query.edit_message_text("Cancelled, nothing changed.")
 
     return ConversationHandler.END
 
@@ -144,11 +139,22 @@ update_particulars_handler = ConversationHandler(
         AWAITING_NEW_EMAIL: [
             MessageHandler(filters.TEXT & ~filters.COMMAND,
                            receive_new_email),
+            CallbackQueryHandler(
+                cancel_particulars,
+                pattern="^cancel_particulars$"
+            ),
         ],
-        AWAITING_NEW_SHEET_URL: [
-            MessageHandler(filters.TEXT & ~filters.COMMAND,
-                           receive_new_sheet_url),
+        AWAITING_SHEET_URL: [
+            MessageHandler(
+                filters.TEXT & ~filters.COMMAND,
+                receive_new_sheet_url,
+            ),
+            CallbackQueryHandler(
+                cancel_particulars,
+                pattern="^cancel_particulars$"
+            ),
         ],
+
     },
     fallbacks=[CommandHandler("cancel", cancel_cmd)],
 

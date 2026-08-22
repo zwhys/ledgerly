@@ -108,7 +108,6 @@ def seed_spreadsheet(spreadsheet: gspread.Spreadsheet) -> None:
     worksheets = spreadsheet.worksheets()
     existing_titles = {worksheet.title for worksheet in worksheets}
 
-    # Create Instructions sheet
     if "Instructions" not in existing_titles:
         default_worksheet = worksheets[0]
 
@@ -127,12 +126,11 @@ def seed_spreadsheet(spreadsheet: gspread.Spreadsheet) -> None:
         format_instructions(instructions_worksheet)
         format_categories(categories_worksheet)
 
-    # Create Categories sheet
     if "Categories" not in existing_titles:
         categories_worksheet = spreadsheet.add_worksheet(
             title="Categories",
             rows=50,
-            cols=10,
+            cols=20,
         )
 
         categories_worksheet.update(CATEGORIES_CONTENT, "A1")
