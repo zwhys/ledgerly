@@ -26,28 +26,30 @@ def parse_fields(fields: dict, category_and_confidence: dict) -> dict:
     '''Now takes the category/confidence as an argument instead of computing it itself'''
     match = re.match(r"([A-Za-z]+)\s*([\d.]+)", fields["amount"])
 
-    data: dict[str, Any] = {
+    # Returns date, amount, from, to, type, full_date, sheet_id, expense_categories, income_categories
+    #Data is date, type, category, amount, currency, confidence,
+
+    entry: dict[str, Any] = {
         "date": format_date(fields["date"], fields["full_date"]),
         "type": fields["type"],
         "category": category_and_confidence["category"],
         "amount": match.group(2),
         "currency": match.group(1),
         "confidence": category_and_confidence["confidence"],
-        "email": fields["email"]
+        "sheet_id": fields["sheet_id"]
     }
 
-    return data
+    return entry
 
 
-def parse_data_all(fields: list[dict]) -> list[dict]:
+def parse_data_all(fields_list: list[dict]) -> list[dict]:
     '''Batches categorisation in parallel, then parses each message using its result'''
-    categories_and_confidences = categorise_all(fields)
+    categories_and_confidences = categorise_all(fields_list)
 
-    results = []
-    for fields, category_and_confidence in zip(fields, categories_and_confidences):
-        data = parse_fields(fields, category_and_confidence)
+    entries = []
+    for fields_list, category_and_confidence in zip(fields_list, categories_and_confidences):
+        data = parse_fields(fields_list, category_and_confidence)
         # data.pop("confidence")
-        data.pop("email")
-        results.append(data)
+        entries.append(data)
 
-    return results
+    return entries

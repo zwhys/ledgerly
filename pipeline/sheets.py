@@ -9,18 +9,14 @@ from google.oauth2.service_account import Credentials
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 HEADERS = ["Date", "Type", "Category", "Confidence",
            "Amount", "Currency", "Description"]
-EXPENSE_CATEGORIES = [
-    "Food",
-    "Transportation",
-    "Health",
-    "Education",
-    "Entertainment",
-]
 
-INCOME_CATEGORIES = [
-    "Allowance",
-    "Salary",
-    "Bonus",
+CATEGORIES_CONTENT = [
+    ["Expense", "Income"],
+    ["Food", "Allowance"],
+    ["Transportation", "Salary"],
+    ["Health", "Bonus"],
+    ["Education", ""],
+    ["Entertainment", ""],
 ]
 
 INSTRUCTIONS_CONTENT = [
@@ -96,7 +92,7 @@ def get_worksheet_for_year(
             title=year,
             rows=1000,
             cols=20,
-            index=1,
+            index=2,
         )
         worksheet.update([HEADERS], "A1")
 
@@ -112,10 +108,11 @@ def seed_spreadsheet(spreadsheet: gspread.Spreadsheet) -> None:
     worksheets = spreadsheet.worksheets()
     existing_titles = {worksheet.title for worksheet in worksheets}
 
+    # Create Instructions sheet
     if "Instructions" not in existing_titles:
-        initial_worksheet = worksheets[0]
+        default_worksheet = worksheets[0]
 
-        if re.fullmatch(r"\d{4}", initial_worksheet.title):
+        if re.fullmatch(r"\d{4}", default_worksheet.title):
             instructions_worksheet = spreadsheet.add_worksheet(
                 title="Instructions",
                 rows=50,
@@ -123,19 +120,22 @@ def seed_spreadsheet(spreadsheet: gspread.Spreadsheet) -> None:
                 index=0,
             )
         else:
-            initial_worksheet.update_title("Instructions")
-            instructions_worksheet = initial_worksheet
+            default_worksheet.update_title("Instructions")
+            instructions_worksheet = default_worksheet
 
         instructions_worksheet.update(INSTRUCTIONS_CONTENT, "A1")
         format_instructions(instructions_worksheet)
+        format_categories(categories_worksheet)
 
     # Create Categories sheet
     if "Categories" not in existing_titles:
-        spreadsheet.add_worksheet(
+        categories_worksheet = spreadsheet.add_worksheet(
             title="Categories",
             rows=50,
             cols=10,
         )
+
+        categories_worksheet.update(CATEGORIES_CONTENT, "A1")
 
 
 def format_instructions(instructions_worksheet: gspread.Worksheet) -> None:
@@ -148,6 +148,12 @@ def format_instructions(instructions_worksheet: gspread.Worksheet) -> None:
     instructions_worksheet.format(
         # CONFIDENCE: Change back when bot is done
         "A20", {"textFormat": {"bold": True, "foregroundColor": {"red": 0.92, "green": 0.26, "blue": 0.21}}})
+
+
+def format_categories(categories_worksheet: gspread.Worksheet) -> None:
+    for cell in ["A1", "A2"]:
+        categories_worksheet.format(
+            cell, {"textFormat": {"bold": True}})
 
 
 def parse_entry_date(date_str: str) -> datetime:
@@ -190,7 +196,8 @@ def insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime, row_i
     })
 
 
-def append_transaction(sheet_id: str, entry: dict):
+def append_transaction(entry: dict):
+    sheet_id = entry["sheet_id"]
     spreadsheet = get_spreadsheet(sheet_id)
     entry_dt = parse_entry_date(entry["date"])
     year = str(entry_dt.year)
@@ -210,3 +217,23 @@ def append_transaction(sheet_id: str, entry: dict):
     worksheet.append_row(row, value_input_option="USER_ENTERED")
 
     return
+
+
+def get_categories(sheet_id: str) -> tuple[list[str], list[str]]:
+    """Read expense and income categories from the Categories worksheet."""
+    spreadsheet = get_spreadsheet(sheet_id)
+    worksheet = spreadsheet.worksheet("Categories")
+
+    rows = worksheet.get_all_values()
+
+    expense_categories = []
+    income_categories = []
+
+    for row in rows[1:]:  # Skip header row
+        if len(row) >= 1 and row[0].strip():
+            expense_categories.append(row[0].strip())
+
+        if len(row) >= 2 and row[1].strip():
+            income_categories.append(row[1].strip())
+
+    return expense_categories, income_categories

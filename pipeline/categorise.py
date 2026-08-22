@@ -3,7 +3,6 @@ from typing import Any
 from openai import OpenAI
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from sheets import EXPENSE_CATEGORIES, INCOME_CATEGORIES
 
 ENV = os.getenv("ENV", "dev")
 
@@ -26,13 +25,19 @@ def transaction_type(fields: dict) -> str:
 client = OpenAI()
 
 
-def categorise(fields: dict) -> dict:
-    '''Classifies the category and add the confidence level'''
-    if transaction_type(fields) == "Expense":
-        categories = EXPENSE_CATEGORIES
+def categorise(
+    fields: dict,
+) -> dict:
+    """Classifies the category and adds the confidence level."""
+
+    transaction = transaction_type(fields)
+
+    if transaction == "Expense":
+        categories = fields["expense_categories"]
         merchant = extract_communicator(fields)["recipient"]
-    elif transaction_type(fields) == "Income":
-        categories = INCOME_CATEGORIES
+
+    elif transaction == "Income":
+        categories = fields["income_categories"]
         merchant = extract_communicator(fields)["sender"]
 
     prompt = f"""Classify the following text into exactly one of these categories: {", ".join(categories)}.
@@ -52,20 +57,20 @@ def categorise(fields: dict) -> dict:
 
     category_and_confidence: dict = json.loads(response.output_text.strip())
 
-    if category_and_confidence["category"] not in categories:
+    if category_and_confidence["confidence"] == "low":
         category_and_confidence["category"] = "Other"
 
     return category_and_confidence
 
 
-def categorise_all(messages: list[dict], max_workers: int = 5) -> list[dict]:
+def categorise_all(fields_list: list[dict], max_workers: int = 5) -> list[dict]:
     '''Runs categorise() over all messages in parallel, preserving order'''
     # Allow for the messages to be returned in order
-    categories_and_confidences = [None] * len(messages)
+    categories_and_confidences = [None] * len(fields_list)
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_mappings = {
-            executor.submit(categorise, fields): i for i, fields in enumerate(messages)
+            executor.submit(categorise, fields): i for i, fields in enumerate(fields_list)
         }  # Creates a map between a future and its message index
 
         for future in as_completed(future_mappings):
@@ -80,4 +85,3 @@ def categorise_all(messages: list[dict], max_workers: int = 5) -> list[dict]:
 
 
 # TODO: Add error handling (Mark as read only after classification is done)
-# TODO: Make category automatically others when confidence is low

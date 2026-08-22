@@ -1,6 +1,9 @@
 import re
 from bs4 import BeautifulSoup
 
+from pipeline.database import get_sheet_id_for_user
+from pipeline.sheets import get_categories
+
 
 def clean_body(body: str) -> str:
     """Convert HTML email to plain text for prod (sort of)"""
@@ -107,9 +110,21 @@ def extract_fields(body: str) -> dict:
     return fields
 
 
-def get_fields(message_info: dict[str, str]):
-    '''Get user email address from user and merge it with fields'''
+def get_fields(message_info: dict[str, str]) -> dict:
+    """Get user email and categories, then merge them with the extracted fields."""
+    # Message_info contains email, body, full_date
+
+    # Fields contains date, amount, from, to, type
     fields = extract_fields(message_info['body'])
-    fields['email'] = message_info['email']
+
     fields['full_date'] = message_info['date']
-    return fields
+
+    sheet_id = get_sheet_id_for_user(message_info['email'])
+    fields['sheet_id'] = sheet_id
+
+    expense_categories, income_categories = get_categories(sheet_id)
+
+    fields['expense_categories'] = expense_categories
+    fields['income_categories'] = income_categories
+
+    return fields  # Returns date, amount, from, to, type, full_date, sheet_id, expense_categories, income_categories
