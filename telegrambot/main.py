@@ -1,13 +1,12 @@
 import os
 from telegram.ext import (
     ApplicationBuilder,
-    CallbackQueryHandler,
     MessageHandler,
     filters,
 )
 from dotenv import load_dotenv
 
-from telegrambot.update_particulars import handle_update_particulars, particulars_back, update_particulars_handler
+from telegrambot.update_particulars import handle_update_particulars, update_particulars_handler
 
 load_dotenv()
 
@@ -40,8 +39,6 @@ def main():
     application.add_handler(update_particulars_handler)
     application.add_handler(MessageHandler(filters.Text(
         ["Update particulars"]), handle_update_particulars))
-    application.add_handler(CallbackQueryHandler(
-        particulars_back, pattern="^particulars_back$"))
 
     # application.add_handler(edit_categories_handler)
     # application.add_handler(add_transaction_handler)

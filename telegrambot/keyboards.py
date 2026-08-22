@@ -15,5 +15,5 @@ PARTICULARS_INLINE = InlineKeyboardMarkup([
     [InlineKeyboardButton("Change email", callback_data="update_email")],
     [InlineKeyboardButton("Change Google Sheet",
                           callback_data="update_sheets")],
-    [InlineKeyboardButton("« Back", callback_data="particulars_back")],
+    [InlineKeyboardButton("Cancel", callback_data="cancel_particulars")]
 ])

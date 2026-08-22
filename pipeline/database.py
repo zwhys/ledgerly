@@ -61,7 +61,6 @@ def save_email(chat_id: str, email: str) -> None:
 
 def save_user_sheet(chat_id: str, sheet_id: str) -> None:
     worksheet = get_db_worksheet()
-
     row = find_db_row(worksheet, chat_id)
 
     if row is not None:

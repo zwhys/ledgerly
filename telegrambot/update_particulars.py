@@ -2,13 +2,12 @@ import re
 from telegram import Update
 from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
 
-from pipeline.database import connect_user_sheet, save_email, get_email_for_chat, save_user_sheet
+from pipeline.database import connect_user_sheet, save_email, save_user_sheet
+from telegrambot.global_commands import start_cmd, cancel_cmd
 from telegrambot.keyboards import MAIN_KEYBOARD, PARTICULARS_INLINE
+from telegrambot.states import AWAITING_EMAIL, AWAITING_SHEET_URL, AWAITING_NEW_EMAIL, AWAITING_NEW_SHEET_URL
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-
-AWAITING_EMAIL, AWAITING_SHEET_URL = range(2)
-AWAITING_NEW_EMAIL, AWAITING_NEW_SHEET_URL = range(100, 102)
 
 
 def extract_sheet_id(url: str) -> str | None:
@@ -119,8 +118,16 @@ async def receive_new_sheet_url(update: Update, context: ContextTypes.DEFAULT_TY
     return await receive_sheet_url(update, context, is_new_sheet=True)
 
 
-async def cancel_particulars(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Okay, cancelled.")
+async def cancel_particulars(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+) -> int:
+
+    query = update.callback_query
+
+    await query.answer()
+    await query.edit_message_text("Okay, cancelled.")
+
     return ConversationHandler.END
 
 update_particulars_handler = ConversationHandler(
@@ -129,6 +136,9 @@ update_particulars_handler = ConversationHandler(
                              pattern="^update_email$"),
         CallbackQueryHandler(update_sheets,
                              pattern="^update_sheets$"),
+        CallbackQueryHandler(cancel_particulars,
+                             pattern="^cancel_particulars$"
+                             )
     ],
     states={
         AWAITING_NEW_EMAIL: [
@@ -140,5 +150,21 @@ update_particulars_handler = ConversationHandler(
                            receive_new_sheet_url),
         ],
     },
-    fallbacks=[CommandHandler("cancel", cancel_particulars)],
+    fallbacks=[CommandHandler("cancel", cancel_cmd)],
+
+)
+
+onboarding_handler = ConversationHandler(
+    entry_points=[CommandHandler("start", start_cmd)],
+    states={
+        AWAITING_EMAIL: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, receive_email),
+            # When the conversation is in the state, if the user sends (condition), call (function).
+        ],
+        AWAITING_SHEET_URL: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND,
+                           receive_sheet_url),
+        ],
+    },
+    fallbacks=[CommandHandler("cancel", cancel_cmd)],
 )
