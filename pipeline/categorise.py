@@ -3,21 +3,7 @@ from typing import Any
 from openai import OpenAI
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
-
-EXPENSE_CATEGORIES = [
-    "Food",
-    "Transportation",
-    "Health",
-    "Education",
-    "Entertainment",
-]
-
-INCOME_CATEGORIES = [
-    "Allowance",
-    "Salary",
-    "Bonus",
-]
+from sheets import EXPENSE_CATEGORIES, INCOME_CATEGORIES
 
 ENV = os.getenv("ENV", "dev")
 

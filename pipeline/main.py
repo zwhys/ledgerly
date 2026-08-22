@@ -13,16 +13,31 @@ def main(event, context):
 
     for message_info in all_message_info:
         fields = get_fields(message_info)
+        # print("FIELDS:", fields)
+        # Test prints
+
         if fields.get('date') and fields.get('amount') is None:
             continue
 
+        # print("PASSED VALIDATION")
+        # Test prints
+
         email = fields.get("email")
+        # print("EMAIL:", email)
+        # Test prints
+
         sheet_id = get_sheet_id_for_user(email)
+        # print("SHEET ID:", sheet_id)
+        # Test prints
 
         if sheet_id is None:
+            # print("SKIPPED: no sheet_id")
+            # Test prints
             continue
 
         to_be_categorised.append((fields, sheet_id))
+        # print("TO BE CATEGORISED:", to_be_categorised)
+        # Test prints
 
     if to_be_categorised:
         fields_list = [fields for fields, _ in to_be_categorised]

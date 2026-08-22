@@ -9,6 +9,19 @@ from google.oauth2.service_account import Credentials
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 HEADERS = ["Date", "Type", "Category", "Confidence",
            "Amount", "Currency", "Description"]
+EXPENSE_CATEGORIES = [
+    "Food",
+    "Transportation",
+    "Health",
+    "Education",
+    "Entertainment",
+]
+
+INCOME_CATEGORIES = [
+    "Allowance",
+    "Salary",
+    "Bonus",
+]
 
 INSTRUCTIONS_CONTENT = [
     ["Welcome to Ledgerly"],
@@ -92,36 +105,47 @@ def get_worksheet_for_year(
 
 
 def seed_spreadsheet(spreadsheet: gspread.Spreadsheet) -> None:
-    """First-time setup: rename the default sheet to Instructions and seed content.
+    """First-time setup: create Instructions and Categories sheets.
     Year sheets (e.g. '2026') are created lazily as transactions come in.
-    Safe to call repeatedly."""
+    Safe to call repeatedly.
+    """
     worksheets = spreadsheet.worksheets()
     existing_titles = {worksheet.title for worksheet in worksheets}
 
-    if "Instructions" in existing_titles:
-        return
+    if "Instructions" not in existing_titles:
+        initial_worksheet = worksheets[0]
 
-    default_worksheet = worksheets[0]
+        if re.fullmatch(r"\d{4}", initial_worksheet.title):
+            instructions_worksheet = spreadsheet.add_worksheet(
+                title="Instructions",
+                rows=50,
+                cols=20,
+                index=0,
+            )
+        else:
+            initial_worksheet.update_title("Instructions")
+            instructions_worksheet = initial_worksheet
 
-    if re.fullmatch(r"\d{4}", default_worksheet.title):
-        default_worksheet = spreadsheet.add_worksheet(
-            title="Instructions", rows=50, cols=20, index=0)
-    else:
-        default_worksheet.update_title("Instructions")
+        instructions_worksheet.update(INSTRUCTIONS_CONTENT, "A1")
+        format_instructions(instructions_worksheet)
 
-    default_worksheet.update(INSTRUCTIONS_CONTENT, "A1")
+    # Create Categories sheet
+    if "Categories" not in existing_titles:
+        spreadsheet.add_worksheet(
+            title="Categories",
+            rows=50,
+            cols=10,
+        )
 
-    format_instructions(default_worksheet)
 
-
-def format_instructions(default_worksheet: gspread.Worksheet) -> None:
-    default_worksheet.format(
+def format_instructions(instructions_worksheet: gspread.Worksheet) -> None:
+    instructions_worksheet.format(
         "A1", {"textFormat": {"bold": True, "fontSize": 20}})
 
     for cell in ["A5", "A10", "A18"]:  # CONFIDENCE: Change back when bot is done
-        default_worksheet.format(
+        instructions_worksheet.format(
             cell, {"textFormat": {"bold": True, "fontSize": 14}})
-    default_worksheet.format(
+    instructions_worksheet.format(
         # CONFIDENCE: Change back when bot is done
         "A20", {"textFormat": {"bold": True, "foregroundColor": {"red": 0.92, "green": 0.26, "blue": 0.21}}})
 

@@ -39,13 +39,28 @@ def get_db_worksheet() -> gspread.Worksheet:
     return worksheet
 
 
-def find_db_row(worksheet: gspread.Worksheet, chat_id) -> Optional[int]:
-    """Return the 1-indexed row number for chat_id, or None if not found."""
-    try:
-        cell = worksheet.find(chat_id, in_column=COL_CHAT_ID)
-    except ValueError:
-        return None
-    return cell.row if cell else None
+def find_db_row(
+    worksheet: gspread.Worksheet,
+    chat_id: str | None = None,
+    email: str | None = None
+) -> Optional[int]:
+    """Return the 1-indexed row number for chat_id or email, or None if not found."""
+
+    if chat_id:
+        try:
+            cell = worksheet.find(chat_id, in_column=COL_CHAT_ID)
+            return cell.row if cell else None
+        except ValueError:
+            pass
+
+    if email:
+        try:
+            cell = worksheet.find(email, in_column=COL_EMAIL)
+            return cell.row if cell else None
+        except ValueError:
+            pass
+
+    return None
 
 
 def save_email(chat_id: str, email: str) -> None:
@@ -83,12 +98,12 @@ def connect_user_sheet(chat_id: str, sheet_id: str) -> dict:
     return {"ok": True, "spreadsheet_title": spreadsheet.title}
 
 
-def get_sheet_id_for_user(chat_id: str) -> Optional[str]:
-    if chat_id in _user_sheet_ids:
-        return _user_sheet_ids[chat_id]
+def get_sheet_id_for_user(email: str) -> Optional[str]:
+    if email in _user_sheet_ids:
+        return _user_sheet_ids[email]
 
     worksheet = get_db_worksheet()
-    row = find_db_row(worksheet, chat_id)
+    row = find_db_row(worksheet, email=email)
 
     if row is None:
         return None
@@ -96,7 +111,7 @@ def get_sheet_id_for_user(chat_id: str) -> Optional[str]:
     sheet_id = worksheet.cell(row, COL_SHEET_ID).value
 
     if sheet_id:
-        _user_sheet_ids[chat_id] = sheet_id
+        _user_sheet_ids[email] = sheet_id
 
     return sheet_id
 
