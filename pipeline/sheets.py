@@ -194,7 +194,18 @@ def insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime, row_i
     })
 
 
-def append_transaction(entry: dict):
+def build_transaction_row(entry: dict) -> list:
+    return [
+        entry["date"],
+        entry["type"],
+        entry["category"],
+        entry["confidence"],  # CONFIDENCE: Delete when bot is done
+        entry["amount"],
+        entry["currency"],
+    ]
+
+
+def save_transaction(entry: dict) -> None:
     sheet_id = entry["sheet_id"]
     spreadsheet = get_spreadsheet(sheet_id)
     entry_dt = parse_entry_date(entry["date"])
@@ -203,14 +214,7 @@ def append_transaction(entry: dict):
 
     maybe_insert_month_divider(worksheet, entry_dt)
 
-    row = [
-        entry["date"],
-        entry["type"],
-        entry["category"],
-        entry["confidence"],  # CONFIDENCE: Delete when bot is done
-        entry["amount"],
-        entry["currency"],
-    ]
+    row = build_transaction_row(entry)
 
     worksheet.append_row(row, value_input_option="USER_ENTERED")
 

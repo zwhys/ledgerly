@@ -1,8 +1,17 @@
+import asyncio
 from extract import get_all_message_info
 from parse_body import get_fields
 from parse_fields import parse_data_all
-from sheets import append_transaction
+from telegrambot.vetting import send_telegram_message
 import time
+
+
+async def process_entries(entries):
+    for entry in entries:
+        sheet_id = entry['sheet_id']
+        transaction_id = entry['transaction_id']
+
+        await send_telegram_message(entry, sheet_id, transaction_id)
 
 
 def main(event, context):
@@ -35,8 +44,7 @@ def main(event, context):
         # print("ENTRIES:", entries)
         # Test prints
 
-        for entry in entries:
-            append_transaction(entry)
+        asyncio.run(process_entries(entries))
 
     return {
         "statusCode": 200,

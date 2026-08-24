@@ -3,46 +3,47 @@ from typing import Optional
 import gspread
 from pipeline.sheets import get_spreadsheet, seed_spreadsheet
 
-WORKSHEET_NAME = "users"
-HEADERS = ["chat_id", "email", "sheet_id"]
+WORKSHEETS = {
+    "users": ["chat_id", "email", "sheet_id"],
+    "pending": ["transaction_id", "sheet_id", "entry"],
+}
+
 
 COL_CHAT_ID = 1
 COL_EMAIL = 2
 COL_SHEET_ID = 3
 
 
-_db_worksheet: gspread.Worksheet | None = None
+_db_worksheets: dict[str, gspread.Worksheet] = {}
 _user_sheet_ids: dict[str, str] = {}
 
 
-def get_db_worksheet() -> gspread.Worksheet:
-    """Get (or create) the worksheet that holds the user -> sheet_id -> chat_id mapping."""
+def get_db_worksheet(name: str) -> gspread.Worksheet:
+    if name in _db_worksheets:
+        return _db_worksheets[name]
 
-    global _db_worksheet
-
-    if _db_worksheet is not None:
-        return _db_worksheet
-
+    headers = WORKSHEETS[name]
     spreadsheet = get_spreadsheet(os.environ["USER_SPREADSHEET_ID"])
 
     try:
-        worksheet = spreadsheet.worksheet(WORKSHEET_NAME)
+        worksheet = spreadsheet.worksheet(name)
     except gspread.WorksheetNotFound:
         worksheet = spreadsheet.add_worksheet(
-            title=WORKSHEET_NAME,
+            title=name,
             rows=1000,
-            cols=len(HEADERS),
+            cols=len(headers),
         )
-        worksheet.append_row(HEADERS)
+        worksheet.append_row(headers)
 
-    _db_worksheet = worksheet
+    _db_worksheets[name] = worksheet
     return worksheet
 
 
 def find_db_row(
     worksheet: gspread.Worksheet,
     chat_id: str | None = None,
-    email: str | None = None
+    email: str | None = None,
+    sheet_id: str | None = None
 ) -> Optional[int]:
     """Return the 1-indexed row number for chat_id or email, or None if not found."""
 
@@ -60,13 +61,20 @@ def find_db_row(
         except ValueError:
             pass
 
+    if sheet_id:
+        try:
+            cell = worksheet.find(sheet_id, in_column=COL_SHEET_ID)
+            return cell.row if cell else None
+        except ValueError:
+            pass
+
     return None
 
 
 def save_email(chat_id: str, email: str) -> None:
     """Create or update a row for this user, recording their email."""
-    worksheet = get_db_worksheet()
-    row = find_db_row(worksheet, chat_id)
+    worksheet = get_db_worksheet("users")
+    row = find_db_row(worksheet, chat_id=chat_id)
 
     if row is not None:
         worksheet.update(f"B{row}", [[email]])
@@ -75,8 +83,8 @@ def save_email(chat_id: str, email: str) -> None:
 
 
 def save_user_sheet(chat_id: str, sheet_id: str) -> None:
-    worksheet = get_db_worksheet()
-    row = find_db_row(worksheet, chat_id)
+    worksheet = get_db_worksheet("users")
+    row = find_db_row(worksheet, chat_id=chat_id)
 
     if row is not None:
         worksheet.update(f"C{row}", [[sheet_id]])
@@ -102,7 +110,7 @@ def get_sheet_id_for_user(email: str) -> Optional[str]:
     if email in _user_sheet_ids:
         return _user_sheet_ids[email]
 
-    worksheet = get_db_worksheet()
+    worksheet = get_db_worksheet("users")
     row = find_db_row(worksheet, email=email)
 
     if row is None:
@@ -117,10 +125,20 @@ def get_sheet_id_for_user(email: str) -> Optional[str]:
 
 
 def get_email_for_chat(chat_id: str) -> Optional[str]:
-    worksheet = get_db_worksheet()
-    row = find_db_row(worksheet, chat_id)
+    worksheet = get_db_worksheet("users")
+    row = find_db_row(worksheet, chat_id=chat_id)
 
     if row is None:
         return None
 
     return worksheet.cell(row, COL_EMAIL).value
+
+
+def get_chat_id(sheet_id: str) -> Optional[str]:
+    worksheet = get_db_worksheet("users")
+    row = find_db_row(worksheet, sheet_id=sheet_id)
+
+    if row is None:
+        return None
+
+    return worksheet.cell(row, COL_CHAT_ID).value

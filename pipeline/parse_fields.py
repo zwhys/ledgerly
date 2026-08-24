@@ -1,6 +1,7 @@
 from typing import Any
 import re
 from datetime import datetime
+import uuid
 
 from categorise import categorise_all
 
@@ -27,7 +28,7 @@ def parse_fields(fields: dict, category_and_confidence: dict) -> dict:
     match = re.match(r"([A-Za-z]+)\s*([\d.]+)", fields["amount"])
 
     # Returns date, amount, from, to, type, full_date, sheet_id, expense_categories, income_categories
-    #Data is date, type, category, amount, currency, confidence,
+    # Data is date, type, category, amount, currency, confidence,
 
     entry: dict[str, Any] = {
         "date": format_date(fields["date"], fields["full_date"]),
@@ -36,7 +37,8 @@ def parse_fields(fields: dict, category_and_confidence: dict) -> dict:
         "amount": match.group(2),
         "currency": match.group(1),
         "confidence": category_and_confidence["confidence"],
-        "sheet_id": fields["sheet_id"]
+        "sheet_id": fields["sheet_id"],
+        "transaction_id": str(uuid.uuid4())
     }
 
     return entry
