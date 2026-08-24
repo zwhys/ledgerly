@@ -84,4 +84,3 @@ def categorise_all(fields_list: list[dict], max_workers: int = 5) -> list[dict]:
     return categories_and_confidences
 
 
-# TODO: Add error handling (Mark as read only after classification is done)
