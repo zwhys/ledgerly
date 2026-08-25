@@ -1,14 +1,22 @@
 import os
-from typing import Any
+from typing import Any, Literal
+from pydantic import BaseModel
 from openai import OpenAI
-import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 ENV = os.getenv("ENV", "dev")
 
 if ENV == "dev":
     from dotenv import load_dotenv
     load_dotenv()
+
+client = OpenAI()
+
+
+class CategoryResponse(BaseModel):
+    category: str
+    confidence: Literal["high", "low"]
 
 
 def extract_communicator(fields: dict) -> dict[str, Any]:
@@ -22,12 +30,7 @@ def transaction_type(fields: dict) -> str:
     return type
 
 
-client = OpenAI()
-
-
-def categorise(
-    fields: dict,
-) -> dict:
+def categorise(fields: dict) -> dict:
     """Classifies the category and adds the confidence level."""
 
     transaction = transaction_type(fields)
@@ -40,27 +43,30 @@ def categorise(
         categories = fields["income_categories"]
         merchant = extract_communicator(fields)["sender"]
 
-    prompt = f"""Classify the following text into exactly one of these categories: {", ".join(categories)}.
+    else:
+        return {"category": "Other", "confidence": "low"}
 
-           Return ONLY a JSON object in this exact format, nothing else:
-           {{"category": "...", "confidence": "high|low"}}
+    prompt = f"""
+            Classify the following merchant into exactly one of these categories:
 
-           Text:
-           {merchant}
-           """
+            {", ".join(categories)}
 
-    response = client.responses.create(
+            Merchant:
+            {merchant}
+            """
+
+    response = client.responses.parse(
         model="gpt-4.1-nano",
         input=prompt,
-        text={"format": {"type": "json_object"}},
+        text_format=CategoryResponse,
     )
 
-    category_and_confidence: dict = json.loads(response.output_text.strip())
+    result = response.output_parsed
 
-    if category_and_confidence["confidence"] == "low":
-        category_and_confidence["category"] = "Other"
+    if result.confidence == "low" or result.category not in categories:
+        result.category = "Other"
 
-    return category_and_confidence
+    return result.model_dump()  # model_dump converts it to a dict
 
 
 def categorise_all(fields_list: list[dict], max_workers: int = 5) -> list[dict]:
@@ -82,5 +88,3 @@ def categorise_all(fields_list: list[dict], max_workers: int = 5) -> list[dict]:
                                                  "confidence": "low", "error": str(e)}
 
     return categories_and_confidences
-
-
