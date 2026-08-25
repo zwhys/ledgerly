@@ -7,7 +7,7 @@ from google.oauth2.service_account import Credentials
 
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-HEADERS = ["Date", "Type", "Category", "Confidence",
+HEADERS = ["Date", "Type", "Category",
            "Amount", "Currency", "Description"]
 
 CATEGORIES_CONTENT = [
@@ -33,8 +33,6 @@ INSTRUCTIONS_CONTENT = [
     ["Date", "When the transaction happened"],
     ["Type", "Income or Expense"],
     ["Category", "e.g. Salary, Food, Transport"],
-    # CONFIDENCE: Remove when bot is done
-    ["Confidence", "How confident the LLM is in its catogorisation"],
     ["Amount", "Transaction amount"],
     ["Currency", "Currency code, e.g. SGD"],
     [""],
@@ -140,12 +138,11 @@ def format_instructions(instructions_worksheet: gspread.Worksheet) -> None:
     instructions_worksheet.format(
         "A1", {"textFormat": {"bold": True, "fontSize": 20}})
 
-    for cell in ["A5", "A10", "A18"]:  # CONFIDENCE: Change back when bot is done
+    for cell in ["A5", "A10", "A17"]:
         instructions_worksheet.format(
             cell, {"textFormat": {"bold": True, "fontSize": 14}})
     instructions_worksheet.format(
-        # CONFIDENCE: Change back when bot is done
-        "A20", {"textFormat": {"bold": True, "foregroundColor": {"red": 0.92, "green": 0.26, "blue": 0.21}}})
+        "A19", {"textFormat": {"bold": True, "foregroundColor": {"red": 0.92, "green": 0.26, "blue": 0.21}}})
 
 
 def format_categories(categories_worksheet: gspread.Worksheet) -> None:
@@ -185,9 +182,8 @@ def maybe_insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime)
 def insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime, row_index: int) -> None:
     label = entry_dt.strftime("%B %Y")
     worksheet.append_row([f"— {label} —"], value_input_option="USER_ENTERED")
-    # CONFIDENCE: Change back when bot is done
-    worksheet.merge_cells(f"A{row_index}:G{row_index}")
-    worksheet.format(f"A{row_index}:G{row_index}", {  # CONFIDENCE: Change back when bot is done
+    worksheet.merge_cells(f"A{row_index}:F{row_index}")
+    worksheet.format(f"A{row_index}:F{row_index}", {
         "textFormat": {"bold": True},
         "horizontalAlignment": "CENTER",
         "backgroundColor": {"red": 0.93, "green": 0.93, "blue": 0.93},
@@ -199,10 +195,9 @@ def build_transaction_row(entry: dict) -> list:
         entry["date"],
         entry["type"],
         entry["category"],
-        entry["confidence"],  # CONFIDENCE: Delete when bot is done
         entry["amount"],
         entry["currency"],
-        entry["description"]
+        entry.get("description", "")
     ]
 
 

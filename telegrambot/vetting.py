@@ -214,7 +214,6 @@ def parse_edit_text(text: str) -> dict | None:
         "date": fields["date"],
         "type": fields["type"],
         "category": fields["category"],
-        "confidence": fields.get("confidence", ""),
         "amount": fields["amount"],
         "currency": fields["currency"],
         "description": fields.get("description", ""),
