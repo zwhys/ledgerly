@@ -202,11 +202,11 @@ def build_transaction_row(entry: dict) -> list:
         entry["confidence"],  # CONFIDENCE: Delete when bot is done
         entry["amount"],
         entry["currency"],
+        entry["description"]
     ]
 
 
-def save_transaction(entry: dict) -> None:
-    sheet_id = entry["sheet_id"]
+def save_transaction(sheet_id: str, entry: dict, ) -> None:
     spreadsheet = get_spreadsheet(sheet_id)
     entry_dt = parse_entry_date(entry["date"])
     year = str(entry_dt.year)

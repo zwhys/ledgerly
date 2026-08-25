@@ -7,7 +7,7 @@ from telegram.ext import (
 )
 
 from telegrambot.update_particulars import handle_update_particulars, onboarding_handler, update_particulars_handler
-from telegrambot.vetting import handle_accept, handle_reject, handle_reject_cancel, handle_reject_confirm
+from telegrambot.vetting import handle_accept, handle_edit_message, handle_reject, handle_edit, handle_reject_cancel, handle_reject_confirm
 
 ENV = os.getenv("ENV", "dev")
 
@@ -44,9 +44,20 @@ def main():
     application.add_handler(CallbackQueryHandler(
         handle_reject, pattern=r"^reject:"))
     application.add_handler(CallbackQueryHandler(
+        handle_edit, pattern=r"^edit:"))
+    application.add_handler(CallbackQueryHandler(
         handle_reject_confirm, pattern=r"^reject_confirm:"))
     application.add_handler(CallbackQueryHandler(
         handle_reject_cancel, pattern=r"^reject_cancel:"))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_edit_message),
+        group=1,
+        # handle_edit_message uses a broad filter so it catches the reply after "Edit" is tapped
+        # Putting it in its own group (instead of default group=0) stops it from competing with
+        # more specific text handlers like "Update particulars" — PTB only runs one match per
+        # group, so without this, the broad filter could swallow messages meant for those handlers.
+        # Both groups get checked independently, so nothing gets stolen.
+    )
 
     application.run_polling()
 
