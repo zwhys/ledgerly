@@ -1,7 +1,7 @@
 import re
 from bs4 import BeautifulSoup
 
-from pipeline.database import get_sheet_id_for_user
+from pipeline.database import get_sheet_id
 from pipeline.sheets import get_categories
 
 
@@ -119,7 +119,7 @@ def get_fields(message_info: dict[str, str]) -> dict:
 
     fields['full_date'] = message_info['date']
 
-    sheet_id = get_sheet_id_for_user(message_info['email'])
+    sheet_id = get_sheet_id(email=message_info['email'])
     fields['sheet_id'] = sheet_id
 
     expense_categories, income_categories = get_categories(sheet_id)

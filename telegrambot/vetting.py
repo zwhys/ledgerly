@@ -51,10 +51,18 @@ async def send_telegram_message(entry, sheet_id, transaction_id):
         print(f"Failed to send Telegram message for sheet_id={sheet_id}: {e}")
 
 
-def save_pending_transaction(transaction_id: str, sheet_id: str, entry) -> None:
+def save_pending_transaction(
+    transaction_id: str,
+    sheet_id: str,
+    entry: dict | None = None
+) -> None:
     worksheet = get_db_worksheet("pending")
 
-    worksheet.append_row([transaction_id, sheet_id, json.dumps(entry)])
+    worksheet.append_row([
+        transaction_id,
+        sheet_id,
+        json.dumps(entry) if entry is not None else ""
+    ])
 
 
 def get_pending_transaction(transaction_id: str) -> dict | None:
@@ -130,7 +138,7 @@ async def handle_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("This transaction is no longer pending.")
         return
 
-    context.chat_data["awaiting_edit"] = transaction_id
+    context.chat_data["awaiting_transaction"] = transaction_id
 
     entry = pending["entry"]
 
@@ -149,19 +157,21 @@ async def handle_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    transaction_id = context.chat_data.get("awaiting_edit")
+async def handle_transaction_message(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    transaction_id = context.chat_data.get("awaiting_transaction")
 
     if transaction_id is None:
         return
 
     text = update.message.text.strip()
 
-    # Remove Markdown code block markers if the user copied the code block
     if text.startswith("```") and text.endswith("```"):
         text = text[3:-3].strip()
 
-    new_entry = parse_edit_text(text)
+    new_entry = parse_text(text)
 
     if new_entry is None:
         await update.message.reply_text(
@@ -178,7 +188,8 @@ async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
 
     update_pending_transaction(transaction_id, new_entry)
-    del context.chat_data["awaiting_edit"]
+
+    context.chat_data.pop("awaiting_transaction", None)
 
     text_preview = format_entry_message(new_entry)
     keyboard = build_vet_transaction_keyboard(transaction_id)
@@ -189,7 +200,7 @@ async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE
     )
 
 
-def parse_edit_text(text: str) -> dict | None:
+def parse_text(text: str) -> dict | None:
     """Parses the prefilled edit format into an entry dictionary."""
 
     fields = {}

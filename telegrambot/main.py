@@ -7,7 +7,8 @@ from telegram.ext import (
 )
 
 from telegrambot.update_particulars import handle_update_particulars, onboarding_handler, update_particulars_handler
-from telegrambot.vetting import handle_accept, handle_edit_message, handle_reject, handle_edit, handle_reject_cancel, handle_reject_confirm
+from telegrambot.add_transaction import handle_add_transaction
+from telegrambot.vetting import handle_accept, handle_reject, handle_edit, handle_reject_cancel, handle_reject_confirm, handle_transaction_message
 
 ENV = os.getenv("ENV", "dev")
 
@@ -38,6 +39,8 @@ def main():
     application.add_handler(update_particulars_handler)
     application.add_handler(MessageHandler(filters.Text(
         ["Update particulars"]), handle_update_particulars))
+    application.add_handler(MessageHandler(filters.Text(
+        ["Add transaction"]), handle_add_transaction))
     application.add_handler(CallbackQueryHandler(
         handle_accept, pattern=r"^accept:"))
     application.add_handler(CallbackQueryHandler(
@@ -49,7 +52,8 @@ def main():
     application.add_handler(CallbackQueryHandler(
         handle_reject_cancel, pattern=r"^reject_cancel:"))
     application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_edit_message),
+        MessageHandler(filters.TEXT & ~filters.COMMAND,
+                       handle_transaction_message),
         group=1,
         # handle_edit_message uses a broad filter so it catches the reply after "Edit" is tapped
         # Putting it in its own group (instead of default group=0) stops it from competing with

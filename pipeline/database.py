@@ -16,6 +16,7 @@ COL_SHEET_ID = 3
 
 _db_worksheets: dict[str, gspread.Worksheet] = {}
 _user_sheet_ids: dict[str, str] = {}
+_telegram_chat_ids: dict[str, str] = {}
 
 
 def get_db_worksheet(name: str) -> gspread.Worksheet:
@@ -106,35 +107,48 @@ def connect_user_sheet(chat_id: str, sheet_id: str) -> dict:
     return {"ok": True, "spreadsheet_title": spreadsheet.title}
 
 
-def get_sheet_id_for_user(email: str) -> Optional[str]:
-    if email in _user_sheet_ids:
+def get_sheet_id(
+    email: str | None = None,
+    chat_id: str | None = None
+) -> Optional[str]:
+    """Get a user's sheet ID using either email or chat_id."""
+
+    if email is None and chat_id is None:
+        return None
+
+    if email is not None and email in _user_sheet_ids:
         return _user_sheet_ids[email]
 
+    if chat_id is not None and chat_id in _telegram_chat_ids:
+        return _telegram_chat_ids[chat_id]
+
     worksheet = get_db_worksheet("users")
-    row = find_db_row(worksheet, email=email)
+
+    row = find_db_row(
+        worksheet,
+        email=email,
+        chat_id=chat_id
+    )
 
     if row is None:
         return None
 
+    email = worksheet.cell(row, COL_EMAIL).value
+    chat_id = worksheet.cell(row, COL_CHAT_ID).value
     sheet_id = worksheet.cell(row, COL_SHEET_ID).value
 
     if sheet_id:
-        _user_sheet_ids[email] = sheet_id
+        if email:
+            _user_sheet_ids[email] = sheet_id
+
+        if chat_id:
+            _telegram_chat_ids[chat_id] = sheet_id
 
     return sheet_id
 
 
-def get_email_for_chat(chat_id: str) -> Optional[str]:
-    worksheet = get_db_worksheet("users")
-    row = find_db_row(worksheet, chat_id=chat_id)
-
-    if row is None:
-        return None
-
-    return worksheet.cell(row, COL_EMAIL).value
-
-
 def get_chat_id(sheet_id: str) -> Optional[str]:
+    '''Sheet_id -> Chat_id'''
     worksheet = get_db_worksheet("users")
     row = find_db_row(worksheet, sheet_id=sheet_id)
 
