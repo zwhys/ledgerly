@@ -1,4 +1,3 @@
-import html
 import json
 import os
 from telegram import Bot, Update
@@ -23,14 +22,14 @@ pending_transactions: dict[str, dict] = {}
 
 def format_entry_message(entry: dict) -> str:
     """Turn a list-style entry into a readable Telegram message.
-    Expected order: [date, ype, category, amount, currency]
+    Expected order: [date, type, category, amount, currency]
     """
     return (
         f"Date: {entry['date']}\n"
         f"Transaction: {entry['type']}\n"
         f"Amount: {entry['amount']} {entry['currency']}\n"
         f"Category: {entry['category']}\n"
-        f"Description: {entry.get('description', '')} "
+        f"Description: {entry.get('description', '-')}"
     )
 
 
@@ -108,7 +107,7 @@ async def handle_accept(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_transaction(pending["sheet_id"], pending["entry"])
     delete_pending_transaction(transaction_id)
 
-    await query.edit_message_text("✅ Transaction accepted and added to your sheet.")
+    await query.edit_message_text("✅ Transaction added successfully.")
 
 
 async def handle_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -133,18 +132,20 @@ async def handle_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.chat_data["awaiting_edit"] = transaction_id
 
-    entry = pending['entry']
+    entry = pending["entry"]
 
-    prefill_text = (f"Date: {entry['date']}\n"
-                    f"Transaction: {entry['type']}\n"
-                    f"Category: {entry['category']}\n"
-                    f"Amount: {entry['amount']} {entry['currency']}\n"
-                    f"Description:\n ")
+    prefill_text = (
+        f"Date: {entry['date']}\n"
+        f"Transaction: {entry['type']}\n"
+        f"Category: {entry['category']}\n"
+        f"Amount: {entry['amount']} {entry['currency']}\n"
+        f"Description: {entry.get('description', '-')}"
+    )
 
     await query.edit_message_text(
         "Send the corrected details in this format (tap to copy):\n\n"
-        f"<code>{html.escape(prefill_text)}</code>",
-        parse_mode="HTML",
+        f"```text\n{prefill_text}\n```",
+        parse_mode="Markdown",
     )
 
 
@@ -152,15 +153,27 @@ async def handle_edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE
     transaction_id = context.chat_data.get("awaiting_edit")
 
     if transaction_id is None:
-        return  # not mid-edit, ignore — let other handlers process this message
+        return
 
-    text = update.message.text
+    text = update.message.text.strip()
+
+    # Remove Markdown code block markers if the user copied the code block
+    if text.startswith("```") and text.endswith("```"):
+        text = text[3:-3].strip()
+
     new_entry = parse_edit_text(text)
 
     if new_entry is None:
         await update.message.reply_text(
             "Couldn't parse that. Please use the format:\n\n"
-            "Date: ...\nType: ...\nCategory: ...\nAmount: ...\nCurrency: ..."
+            "```text\n"
+            "Date: ...\n"
+            "Transaction: ...\n"
+            "Category: ...\n"
+            "Amount: ... ...\n"
+            "Description: ...\n"
+            "```",
+            parse_mode="Markdown",
         )
         return
 
@@ -216,7 +229,7 @@ def parse_edit_text(text: str) -> dict | None:
         "category": fields["category"],
         "amount": fields["amount"],
         "currency": fields["currency"],
-        "description": fields.get("description", ""),
+        "description": fields.get("description", "-"),
     }
 
 
