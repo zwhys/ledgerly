@@ -120,7 +120,7 @@ def get_all_message_info() -> list[dict[str, str]]:
         response_message_ids.append(message_id)
 
     if ENV == "prod":
-        mark_emails_as_read(
+        mark_emails_as_read(  # TODO: Add better error handling (Mark as read after categorisation is done)
             session,
             response_message_ids,
         )

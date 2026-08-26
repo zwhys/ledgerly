@@ -35,9 +35,10 @@ INSTRUCTIONS_CONTENT = [
     ["Category", "e.g. Salary, Food, Transport"],
     ["Amount", "Transaction amount"],
     ["Currency", "Currency code, e.g. SGD"],
+    ["Description", "Short explanation"],
     [""],
     ["Tips"],
-    ["- A new sheet is created automatically for each year — no setup needed."],
+    ["- A new sheet is created automatically for each year."],
     ["- Don't rename year sheets — Ledgerly looks for them by year (e.g. '2026')."],
     ["- Feel free to add your own charts, pivot tables, or extra tabs elsewhere in this sheet."],
 ]
@@ -140,11 +141,11 @@ def format_instructions(instructions_worksheet: gspread.Worksheet) -> None:
     instructions_worksheet.format(
         "A1", {"textFormat": {"bold": True, "fontSize": 20}})
 
-    for cell in ["A5", "A10", "A17"]:
+    for cell in ["A5", "A10", "A18"]:
         instructions_worksheet.format(
             cell, {"textFormat": {"bold": True, "fontSize": 14}})
     instructions_worksheet.format(
-        "A19", {"textFormat": {"bold": True, "foregroundColor": {"red": 0.92, "green": 0.26, "blue": 0.21}}})
+        "A20", {"textFormat": {"bold": True, "foregroundColor": {"red": 0.92, "green": 0.26, "blue": 0.21}}})
 
 
 def format_categories(categories_worksheet: gspread.Worksheet) -> None:

@@ -7,7 +7,7 @@ from pipeline.database import get_sheet_id
 from telegrambot.vetting import save_pending_transaction
 
 
-def get_timestamp() -> str:
+def get_datetime() -> str:
     return datetime.now().strftime("%d/%m/%Y %H:%M:%S (SGT)")
 
 
@@ -25,10 +25,10 @@ async def handle_add_transaction(
     context.chat_data["awaiting_transaction"] = transaction_id
 
     prefill_text = (
-        f"Date: {get_timestamp()}\n"
+        f"Date: {get_datetime()}\n"
         f"Transaction: Expense/Income\n"
         f"Category: \n"
-        f"Amount: <currency> <amount>\n"
+        f"Amount: <amount> <currency>\n"
         f"Description: "
     )
 

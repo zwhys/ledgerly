@@ -25,15 +25,10 @@ def extract_communicator(fields: dict) -> dict[str, Any]:
     return {"recipient": recipient, "sender": sender}
 
 
-def transaction_type(fields: dict) -> str:
-    type: str = fields['type']
-    return type
-
-
 def categorise(fields: dict) -> dict:
     """Classifies the category and adds the confidence level."""
 
-    transaction = transaction_type(fields)
+    transaction = str(fields['type'])
 
     if transaction == "Expense":
         categories = fields["expense_categories"]

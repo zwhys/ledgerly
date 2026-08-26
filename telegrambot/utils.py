@@ -12,7 +12,7 @@ AWAITING_NEW_EMAIL, AWAITING_NEW_SHEET_URL = range(100, 102)
 
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
-    [["Update particulars", "Add transaction"]],
+    [["⚙️ Update particulars", "➕ Add transaction"]],
     resize_keyboard=True,
     one_time_keyboard=False,
 )
@@ -29,17 +29,24 @@ CANCEL_PARTICULARS_INLINE = InlineKeyboardMarkup([[InlineKeyboardButton(
     callback_data="cancel_particulars")]
 ])
 
+
 def build_vet_transaction_keyboard(transaction_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([[
-        InlineKeyboardButton("✅ Accept", callback_data=f"accept:{transaction_id}"),
-        InlineKeyboardButton("❌ Reject", callback_data=f"reject:{transaction_id}"),
-        InlineKeyboardButton("✏️ Edit", callback_data=f"edit:{transaction_id}"),
+        InlineKeyboardButton(
+            "✅ Accept", callback_data=f"accept:{transaction_id}"),
+        InlineKeyboardButton(
+            "❌ Reject", callback_data=f"reject:{transaction_id}"),
+        InlineKeyboardButton(
+            "✏️ Edit", callback_data=f"edit:{transaction_id}"),
     ]])
+
 
 def build_reject_confirm_keyboard(transaction_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([[
-        InlineKeyboardButton("Confirm", callback_data=f"reject_confirm:{transaction_id}"),
-        InlineKeyboardButton("Cancel", callback_data=f"reject_cancel:{transaction_id}"),
+        InlineKeyboardButton(
+            "Confirm", callback_data=f"reject_confirm:{transaction_id}"),
+        InlineKeyboardButton(
+            "Cancel", callback_data=f"reject_cancel:{transaction_id}"),
     ]])
 
 

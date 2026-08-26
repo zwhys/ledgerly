@@ -87,7 +87,7 @@ async def receive_sheet_url(
     chat_id = str(update.effective_chat.id)
 
     if is_new_sheet:
-        save_user_sheet(chat_id, sheet_id)
+        connect_user_sheet(chat_id, sheet_id)
 
         await update.message.reply_text(
             "✅ Google Sheet updated successfully."

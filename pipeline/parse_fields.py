@@ -50,7 +50,6 @@ def parse_data_all(fields_list: list[dict]) -> list[dict]:
     entries = []
     for fields_list, category_and_confidence in zip(fields_list, categories_and_confidences):
         data = parse_fields(fields_list, category_and_confidence)
-        # data.pop("confidence")
         entries.append(data)
 
     return entries

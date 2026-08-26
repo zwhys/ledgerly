@@ -44,30 +44,22 @@ def find_db_row(
     worksheet: gspread.Worksheet,
     chat_id: str | None = None,
     email: str | None = None,
-    sheet_id: str | None = None
+    sheet_id: str | None = None,
 ) -> Optional[int]:
-    """Return the 1-indexed row number for chat_id or email, or None if not found."""
+    """Return the 1-indexed row number matching the first provided identifier."""
 
-    if chat_id:
-        try:
-            cell = worksheet.find(chat_id, in_column=COL_CHAT_ID)
-            return cell.row if cell else None
-        except ValueError:
-            pass
+    fields = {
+        COL_CHAT_ID: chat_id,
+        COL_EMAIL: email,
+        COL_SHEET_ID: sheet_id,
+    }
 
-    if email:
-        try:
-            cell = worksheet.find(email, in_column=COL_EMAIL)
-            return cell.row if cell else None
-        except ValueError:
-            pass
-
-    if sheet_id:
-        try:
-            cell = worksheet.find(sheet_id, in_column=COL_SHEET_ID)
-            return cell.row if cell else None
-        except ValueError:
-            pass
+    for column, value in fields.items():
+        if value:
+            try:
+                return worksheet.find(value, in_column=column).row
+            except gspread.exceptions.CellNotFound:
+                pass
 
     return None
 

@@ -5,21 +5,6 @@ from pipeline.database import get_sheet_id
 from pipeline.sheets import get_categories
 
 
-def clean_body(body: str) -> str:
-    """Convert HTML email to plain text for prod (sort of)"""
-    soup = BeautifulSoup(body, "html.parser")
-
-    for br in soup.find_all("br"):
-        br.replace_with("\n")
-
-    text = soup.get_text()
-
-    text = re.sub(r"[ \t]+", " ", text)
-    text = re.sub(r"\n\s*\n+", "\n", text)
-
-    return text.strip()
-
-
 EXPENSE_BLOCK_PATTERN = (
     r"Date\s*&\s*Time:\s*(.+)\n"
     r"Amount:\s*(.+)\n"
@@ -37,9 +22,19 @@ INCOME_SENTENCE_PATTERN = (
 )
 
 
-# def clean_body(body: str) -> str:
-#     '''Remove any markdown characters'''
-#     return re.sub(r"\*+", "", body)
+def clean_body(body: str) -> str:
+    """Convert HTML email to plain text for prod"""
+    soup = BeautifulSoup(body, "html.parser")
+
+    for br in soup.find_all("br"):
+        br.replace_with("\n")
+
+    text = soup.get_text()
+
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n\s*\n+", "\n", text)
+
+    return text.strip()
 
 
 def get_expense_block(cleaned_body: str) -> dict:
