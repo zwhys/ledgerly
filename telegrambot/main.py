@@ -32,7 +32,6 @@ def main():
     )
 
     application.add_handler(onboarding_handler)
-    # Commented out for easier testing
 
     # Reply-keyboard button handlers (only reached once a user is
     # no longer inside the onboarding conversation)

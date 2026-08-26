@@ -87,10 +87,10 @@ async def receive_sheet_url(
     chat_id = str(update.effective_chat.id)
 
     if is_new_sheet:
-        # save_user_sheet(chat_id, sheet_id) Commented out for dev
+        save_user_sheet(chat_id, sheet_id)
 
         await update.message.reply_text(
-            "✅ Google Sheet updated."
+            "✅ Google Sheet updated successfully."
         )
     else:
         connect_user_sheet(chat_id, sheet_id)
@@ -142,7 +142,7 @@ update_particulars_handler = ConversationHandler(
                 pattern="^cancel_particulars$"
             ),
         ],
-        AWAITING_SHEET_URL: [
+        AWAITING_NEW_SHEET_URL: [
             MessageHandler(
                 filters.TEXT & ~filters.COMMAND,
                 receive_new_sheet_url,

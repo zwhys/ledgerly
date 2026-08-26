@@ -107,9 +107,10 @@ def seed_spreadsheet(spreadsheet: gspread.Spreadsheet) -> None:
     existing_titles = {worksheet.title for worksheet in worksheets}
 
     if "Instructions" not in existing_titles:
-        default_worksheet = worksheets[0]
+        first_worksheet = worksheets[0]
 
-        if re.fullmatch(r"\d{4}", default_worksheet.title):
+        # Check if there is already a year worksheet
+        if re.fullmatch(r"\d{4}", first_worksheet.title):
             instructions_worksheet = spreadsheet.add_worksheet(
                 title="Instructions",
                 rows=50,
@@ -117,12 +118,12 @@ def seed_spreadsheet(spreadsheet: gspread.Spreadsheet) -> None:
                 index=0,
             )
         else:
-            default_worksheet.update_title("Instructions")
-            instructions_worksheet = default_worksheet
+            first_worksheet.update_title("Instructions")
+            instructions_worksheet = first_worksheet
 
         instructions_worksheet.update(INSTRUCTIONS_CONTENT, "A1")
         format_instructions(instructions_worksheet)
-        format_categories(categories_worksheet)
+        
 
     if "Categories" not in existing_titles:
         categories_worksheet = spreadsheet.add_worksheet(
@@ -132,6 +133,7 @@ def seed_spreadsheet(spreadsheet: gspread.Spreadsheet) -> None:
         )
 
         categories_worksheet.update(CATEGORIES_CONTENT, "A1")
+        format_categories(categories_worksheet)
 
 
 def format_instructions(instructions_worksheet: gspread.Worksheet) -> None:
