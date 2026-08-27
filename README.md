@@ -1,6 +1,6 @@
 # Ledgerly
 
-Ledgerly is a personal-finance ETL pipeline that reads DBS transaction alert emails from Gmail, extracts transaction details, uses an LLM to categorise transactions, and sends them to a Telegram bot for user vetting before recording them in Google Sheets.
+Ledgerly is a personal-finance ETL pipeline that reads DBS transaction alert emails from Gmail, extracts transaction details, uses an LLM to categorise transactions, and sends them to a Telegram bot for user vetting before recording them in Google Sheets. Users can also manually add transactions through the Telegram bot.
 
 ## Setup
 
@@ -10,6 +10,7 @@ Clone the repository and navigate into the project directory:
 
 ```bash
 git clone https://github.com/zwhys/ledgerly.git
+
 cd ledgerly
 ```
 
@@ -71,8 +72,8 @@ Do not commit `.env` or any credential files to the repository.
 
 Enable the following APIs in your Google Cloud project:
 
-- Gmail API
-- Google Sheets API
+* Gmail API
+* Google Sheets API
 
 Configure the required OAuth credentials and service account credentials.
 
@@ -116,7 +117,12 @@ Ledgerly is now ready to use.
 
 ## How It Works
 
-Ledgerly processes transactions through the following pipeline:
+Ledgerly supports two ways of recording transactions:
+
+1. **Automatic transactions** — DBS transaction emails are processed, categorised by an LLM, and sent to the user for vetting.
+2. **Manual transactions** — Users can manually enter transactions through the Telegram bot.
+
+### Automatic Transaction Pipeline
 
 ```text
 DBS Transaction Email
@@ -142,11 +148,11 @@ Ledgerly polls the Gmail inbox via OAuth, retrieves unread transaction emails, e
 
 Regular expressions are used to extract structured transaction data from the email body, including:
 
-- Amount
-- Transaction type
-- Date
-- Sender
-- Recipient
+* Amount
+* Transaction type
+* Date
+* Sender
+* Recipient
 
 ### 3. Categorisation
 
@@ -158,16 +164,30 @@ The categorised transaction is sent to the user through the Telegram bot.
 
 The user can:
 
-- Accept the transaction
-- Reject the transaction
-- Edit the transaction before recording it
+* Accept the transaction
+* Reject the transaction
+* Edit the transaction before recording it
 
 This allows users to verify and correct the LLM's output before it is stored.
 
-### 5. Recording
+### 5. Manual Transactions
 
-Once the transaction has been approved, Ledgerly writes the final transaction record to the user's Google Sheet.
+Users can manually add transactions directly through the Telegram bot using the **Add transaction** option.
+
+The bot prompts the user to provide the transaction details, including:
+
+* Date
+* Transaction type
+* Category
+* Amount and currency
+* Description
+
+The transaction is then recorded in the user's Google Sheet without requiring a DBS transaction email or LLM categorisation.
+
+### 6. Recording
+
+Once a transaction has been approved or manually entered, Ledgerly writes the final transaction record to the user's Google Sheet.
 
 ## Future Improvements
 
-- Support banks other than DBS
+* Support banks other than DBS
