@@ -2,12 +2,14 @@ import os
 from telegram.ext import (
     ApplicationBuilder,
     CallbackQueryHandler,
+    CommandHandler,
     MessageHandler,
     filters,
 )
 
 from telegrambot.update_particulars import handle_update_particulars, onboarding_handler, update_particulars_handler
 from telegrambot.add_transaction import handle_add_transaction
+from telegrambot.utils import help_cmd
 from telegrambot.vetting import handle_accept, handle_reject, handle_edit, handle_reject_cancel, handle_reject_confirm, handle_transaction_message
 
 ENV = os.getenv("ENV", "dev")
@@ -33,6 +35,7 @@ def main():
     )
 
     application.add_handler(onboarding_handler)
+    application.add_handler(CommandHandler("help", help_cmd))
 
     # Reply-keyboard button handlers (only reached once a user is
     # no longer inside the onboarding conversation)

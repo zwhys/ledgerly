@@ -65,3 +65,21 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def cancel_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text("Okay, cancelled.")
     return ConversationHandler.END
+
+
+async def help_cmd(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+) -> int:
+
+    await update.message.reply_text(
+        "Here are the available commands:\n\n"
+        "/start — Connect your Telegram chat to Ledgerly.\n"
+        "/help — Show this help message.\n"
+        "/cancel — Cancel the current operation.\n\n"
+        "You can also use the buttons in the menu to:\n"
+        "• Update your email or Google Sheet"
+        "• Add a transaction\n"
+    )
+
+    return ConversationHandler.END
