@@ -24,7 +24,7 @@ def get_db_worksheet(name: str) -> gspread.Worksheet:
         return _db_worksheets[name]
 
     headers = WORKSHEETS[name]
-    spreadsheet = get_spreadsheet(os.environ["USER_SPREADSHEET_ID"])
+    spreadsheet = get_spreadsheet(os.environ["DB_SPREADSHEET_ID"])
 
     try:
         worksheet = spreadsheet.worksheet(name)
