@@ -4,9 +4,9 @@ import os
 from telegram import Bot, Update
 from telegram.ext import ContextTypes
 
-from pipeline.database import get_chat_id, get_db_worksheet
-from pipeline.sheets import save_transaction
-from telegrambot.utils import build_reject_confirm_keyboard, build_vet_transaction_keyboard
+from database import get_chat_id, get_db_worksheet
+from sheets import save_transaction
+from utils import build_reject_confirm_keyboard, build_vet_transaction_keyboard
 
 
 ENV = os.getenv("ENV", "dev")

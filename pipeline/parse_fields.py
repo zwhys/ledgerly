@@ -7,6 +7,7 @@ from categorise import categorise_all
 
 
 def format_date(date: str, full_date: str) -> str:
+    '''Formats date to be like 14/08/2026 13:22:37 (SGT)'''
     date_dt = datetime.strptime(
         date.replace(" (SGT)", ""),
         "%d %b %H:%M"
@@ -23,7 +24,7 @@ def format_date(date: str, full_date: str) -> str:
     )  # TODO: Look at effect on overseas transitions
 
 
-def parse_fields(fields: dict, category_and_confidence: dict) -> dict:
+def parse_fields(fields: dict, category: str) -> dict:
     '''Now takes the category/confidence as an argument instead of computing it itself'''
     match = re.match(r"([A-Za-z]+)\s*([\d.]+)", fields["amount"])
 
@@ -33,7 +34,7 @@ def parse_fields(fields: dict, category_and_confidence: dict) -> dict:
     entry: dict[str, Any] = {
         "date": format_date(fields["date"], fields["full_date"]),
         "type": fields["type"],
-        "category": category_and_confidence["category"],
+        "category": category,
         "amount": match.group(2),
         "currency": match.group(1),
         "sheet_id": fields["sheet_id"],
@@ -43,13 +44,13 @@ def parse_fields(fields: dict, category_and_confidence: dict) -> dict:
     return entry
 
 
-def parse_data_all(fields_list: list[dict]) -> list[dict]:
+def parse_data_all(list_of_fields: list[dict]) -> list[dict]:
     '''Batches categorisation in parallel, then parses each message using its result'''
-    categories_and_confidences = categorise_all(fields_list)
+    categories = categorise_all(list_of_fields)
 
     entries = []
-    for fields_list, category_and_confidence in zip(fields_list, categories_and_confidences):
-        data = parse_fields(fields_list, category_and_confidence)
+    for list_of_fields, category in zip(list_of_fields, categories):
+        data = parse_fields(list_of_fields, category)
         entries.append(data)
 
     return entries

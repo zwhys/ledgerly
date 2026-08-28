@@ -29,6 +29,7 @@ def main(event, context):
         if fields.get('date') and fields.get('amount') is None:
             continue
 
+        # TODO: Find out if sheet_id needs to be in entries (Sheet_id is used to process_entries)
         sheet_id = fields.get("sheet_id")
 
         # print("SHEET ID:", sheet_id)

@@ -7,10 +7,10 @@ from telegram.ext import (
     filters,
 )
 
-from telegrambot.update_particulars import handle_update_particulars, onboarding_handler, update_particulars_handler
-from telegrambot.add_transaction import handle_add_transaction
-from telegrambot.utils import help_cmd
-from telegrambot.vetting import handle_accept, handle_reject, handle_edit, handle_reject_cancel, handle_reject_confirm, handle_transaction_message
+from update_particulars import handle_update_particulars, onboarding_handler, update_particulars_handler
+from add_transaction import handle_add_transaction
+from utils import help_cmd
+from vetting import handle_accept, handle_reject, handle_edit, handle_reject_cancel, handle_reject_confirm, handle_transaction_message
 
 ENV = os.getenv("ENV", "dev")
 

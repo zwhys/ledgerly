@@ -1,8 +1,8 @@
 import re
 from bs4 import BeautifulSoup
 
-from pipeline.database import get_sheet_id
-from pipeline.sheets import get_categories
+from telegrambot.database import get_sheet_id
+from telegrambot.sheets import get_categories
 
 
 EXPENSE_BLOCK_PATTERN = (
@@ -23,7 +23,7 @@ INCOME_SENTENCE_PATTERN = (
 
 
 def clean_body(body: str) -> str:
-    """Convert HTML email to plain text for prod"""
+    """Convert HTML email to plain text"""
     soup = BeautifulSoup(body, "html.parser")
 
     for br in soup.find_all("br"):
@@ -40,6 +40,7 @@ def clean_body(body: str) -> str:
 def get_expense_block(cleaned_body: str) -> dict:
     result = {"date": None, "amount": None,
               "from": None, "to": None, "type": None}
+
     matched = re.search(EXPENSE_BLOCK_PATTERN, cleaned_body, re.IGNORECASE)
     if matched:
         result["date"] = matched.group(1).strip()
@@ -98,9 +99,9 @@ def extract_fields(body: str) -> dict:
         if not any(field is None for field in fields.values()):
             break
         fallback = extractor(cleaned_body)
-        for key in fields:
-            if fields[key] is None:
-                fields[key] = fallback[key]
+        for header in fields:
+            if fields[header] is None:
+                fields[header] = fallback[header]
 
     return fields
 

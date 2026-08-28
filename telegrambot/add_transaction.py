@@ -4,8 +4,8 @@ import uuid
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from pipeline.database import get_sheet_id
-from telegrambot.vetting import save_pending_transaction
+from database import get_sheet_id
+from vetting import save_pending_transaction
 
 
 def get_datetime() -> str:

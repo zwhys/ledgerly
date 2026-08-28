@@ -25,20 +25,21 @@ def extract_communicator(fields: dict) -> dict[str, Any]:
     return {"recipient": recipient, "sender": sender}
 
 
-def categorise(fields: dict) -> dict:
-    """Classifies the category and adds the confidence level."""
+def categorise(fields: dict) -> str:
+    """Classifies the category"""
 
     transaction = str(fields['type'])
+    communicator = extract_communicator(fields)
 
     if transaction == "Expense":
         categories = fields["expense_categories"]
-        merchant = extract_communicator(fields)["recipient"]
+        merchant = communicator["recipient"]
 
     elif transaction == "Income":
         categories = fields["income_categories"]
-        merchant = extract_communicator(fields)["sender"]
+        merchant = communicator["sender"]
 
-    else:
+    else:  # Failsafe unlikely to trigger, may trigger in the future if how transaction type is identified
         return {"category": "Other", "confidence": "low"}
 
     prompt = f"""
@@ -61,25 +62,25 @@ def categorise(fields: dict) -> dict:
     if result.confidence == "low" or result.category not in categories:
         result.category = "Other"
 
-    return result.model_dump()  # model_dump converts it to a dict
+    return result.category
 
 
-def categorise_all(fields_list: list[dict], max_workers: int = 5) -> list[dict]:
+def categorise_all(list_of_fields: list[dict], max_workers: int = 5) -> list[str]:
     '''Runs categorise() over all messages in parallel, preserving order'''
     # Allow for the messages to be returned in order
-    categories_and_confidences = [None] * len(fields_list)
+    categories = [None] * len(list_of_fields)
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_mappings = {
-            executor.submit(categorise, fields): i for i, fields in enumerate(fields_list)
+            executor.submit(categorise, fields): i for i, fields in enumerate(list_of_fields)
         }  # Creates a map between a future and its message index
 
         for future in as_completed(future_mappings):
             i = future_mappings[future]
             try:
-                categories_and_confidences[i] = future.result()
+                categories[i] = future.result()
             except Exception as e:
-                categories_and_confidences[i] = {"category": "Other",
-                                                 "confidence": "low", "error": str(e)}
+                # TODO: Take a look at how to handle the exception
+                categories[i] = {"category": "Other", "error": str(e)}
 
-    return categories_and_confidences
+    return categories

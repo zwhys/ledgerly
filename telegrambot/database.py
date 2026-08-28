@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 import gspread
-from pipeline.sheets import get_spreadsheet, seed_spreadsheet
+from sheets import get_spreadsheet, seed_spreadsheet
 
 WORKSHEETS = {
     "users": ["chat_id", "email", "sheet_id"],
