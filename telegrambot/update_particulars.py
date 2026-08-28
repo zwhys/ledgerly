@@ -1,3 +1,4 @@
+import asyncio
 import re
 from telegram import Update
 from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
@@ -6,10 +7,11 @@ from pipeline.database import connect_user_sheet, save_email, save_user_sheet
 from telegrambot.utils import start_cmd, cancel_cmd, CANCEL_PARTICULARS_INLINE, MAIN_KEYBOARD, PARTICULARS_INLINE, AWAITING_EMAIL, AWAITING_SHEET_URL, AWAITING_NEW_EMAIL, AWAITING_NEW_SHEET_URL
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+SHEET_ID_RE = re.compile(r"/spreadsheets/d/([a-zA-Z0-9-_]+)")
 
 
 def extract_sheet_id(url: str) -> str | None:
-    match = re.compile(r"/spreadsheets/d/([a-zA-Z0-9-_]+)").search(url)
+    match = SHEET_ID_RE.search(url)
     return match.group(1) if match else None
 
 
@@ -55,7 +57,7 @@ async def receive_email(
 
     chat_id = str(update.effective_chat.id)
 
-    save_email(chat_id, email)
+    await asyncio.to_thread(save_email, chat_id, email)
     context.user_data["email"] = email
 
     if is_new_email:
@@ -87,13 +89,13 @@ async def receive_sheet_url(
     chat_id = str(update.effective_chat.id)
 
     if is_new_sheet:
-        connect_user_sheet(chat_id, sheet_id)
+        await asyncio.to_thread(connect_user_sheet, chat_id, sheet_id)
 
         await update.message.reply_text(
             "✅ Google Sheet updated successfully."
         )
     else:
-        connect_user_sheet(chat_id, sheet_id)
+        await asyncio.to_thread(connect_user_sheet, chat_id, sheet_id)
 
         await update.message.reply_text(
             "✅ Got it, sheet connected! Use the buttons below to get started.",

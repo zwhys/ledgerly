@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 import uuid
 from telegram import Update
@@ -18,9 +19,9 @@ async def handle_add_transaction(
     transaction_id = str(uuid.uuid4())
     chat_id = str(update.effective_chat.id)
 
-    sheet_id = get_sheet_id(chat_id=chat_id)
+    sheet_id = await asyncio.to_thread(get_sheet_id, chat_id=chat_id)
 
-    save_pending_transaction(transaction_id, sheet_id)
+    await asyncio.to_thread(save_pending_transaction, transaction_id, sheet_id)
 
     context.chat_data["awaiting_transaction"] = transaction_id
 

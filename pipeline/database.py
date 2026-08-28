@@ -18,6 +18,10 @@ _db_worksheets: dict[str, gspread.Worksheet] = {}
 _user_sheet_ids: dict[str, str] = {}
 _telegram_chat_ids: dict[str, str] = {}
 
+_row_by_chat_id: dict[str, int] = {}
+_row_by_email: dict[str, int] = {}
+_row_by_sheet_id: dict[str, int] = {}
+
 
 def get_db_worksheet(name: str) -> gspread.Worksheet:
     if name in _db_worksheets:
@@ -46,7 +50,18 @@ def find_db_row(
     email: str | None = None,
     sheet_id: str | None = None,
 ) -> Optional[int]:
-    """Return the 1-indexed row number matching the first provided identifier."""
+    """Return the 1-indexed row number matching the first provided identifier.
+
+    Checks the in-memory row cache before hitting the Sheets API. This turns
+    a repeat lookup for the same user from a network call into a dict lookup.
+    """
+
+    if chat_id and chat_id in _row_by_chat_id:
+        return _row_by_chat_id[chat_id]
+    if email and email in _row_by_email:
+        return _row_by_email[email]
+    if sheet_id and sheet_id in _row_by_sheet_id:
+        return _row_by_sheet_id[sheet_id]
 
     fields = {
         COL_CHAT_ID: chat_id,
@@ -57,11 +72,28 @@ def find_db_row(
     for column, value in fields.items():
         if value:
             try:
-                return worksheet.find(value, in_column=column).row
+                row = worksheet.find(value, in_column=column).row
+                _cache_row(row, chat_id=chat_id,
+                           email=email, sheet_id=sheet_id)
+                return row
             except gspread.exceptions.CellNotFound:
                 pass
 
     return None
+
+
+def _cache_row(
+    row: int,
+    chat_id: str | None = None,
+    email: str | None = None,
+    sheet_id: str | None = None,
+) -> None:
+    if chat_id:
+        _row_by_chat_id[chat_id] = row
+    if email:
+        _row_by_email[email] = row
+    if sheet_id:
+        _row_by_sheet_id[sheet_id] = row
 
 
 def save_email(chat_id: str, email: str) -> None:
@@ -81,6 +113,7 @@ def save_user_sheet(chat_id: str, sheet_id: str) -> None:
 
     if row is not None:
         worksheet.update(f"C{row}", [[sheet_id]])
+        _cache_row(row, chat_id=chat_id, sheet_id=sheet_id)
     else:
         worksheet.append_row([chat_id, "", sheet_id])
 
@@ -125,18 +158,21 @@ def get_sheet_id(
     if row is None:
         return None
 
-    email = worksheet.cell(row, COL_EMAIL).value
-    chat_id = worksheet.cell(row, COL_CHAT_ID).value
-    sheet_id = worksheet.cell(row, COL_SHEET_ID).value
+    values = worksheet.row_values(row)
+    row_chat_id = values[COL_CHAT_ID -
+                         1] if len(values) >= COL_CHAT_ID else None
+    row_email = values[COL_EMAIL - 1] if len(values) >= COL_EMAIL else None
+    row_sheet_id = values[COL_SHEET_ID -
+                          1] if len(values) >= COL_SHEET_ID else None
 
-    if sheet_id:
-        if email:
-            _user_sheet_ids[email] = sheet_id
+    if row_sheet_id:
+        if row_email:
+            _user_sheet_ids[row_email] = row_sheet_id
 
-        if chat_id:
-            _telegram_chat_ids[chat_id] = sheet_id
+        if row_chat_id:
+            _telegram_chat_ids[row_chat_id] = row_sheet_id
 
-    return sheet_id
+    return row_sheet_id
 
 
 def get_chat_id(sheet_id: str) -> Optional[str]:

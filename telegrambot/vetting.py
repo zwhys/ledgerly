@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 from telegram import Bot, Update
@@ -34,7 +35,7 @@ def format_entry_message(entry: dict) -> str:
 
 
 async def send_telegram_message(entry, sheet_id, transaction_id):
-    chat_id = get_chat_id(sheet_id)
+    chat_id = await asyncio.to_thread(get_chat_id, sheet_id)
     if chat_id is None:
         print(
             f"No chat_id found for sheet_id={sheet_id}, skipping Telegram send.")
@@ -43,7 +44,7 @@ async def send_telegram_message(entry, sheet_id, transaction_id):
     text = format_entry_message(entry)
     keyboard = build_vet_transaction_keyboard(transaction_id)
 
-    save_pending_transaction(transaction_id, sheet_id, entry)
+    await asyncio.to_thread(save_pending_transaction, transaction_id, sheet_id, entry)
 
     try:
         await bot.send_message(chat_id=chat_id, text=text, reply_markup=keyboard)
@@ -65,39 +66,55 @@ def save_pending_transaction(
     ])
 
 
-def get_pending_transaction(transaction_id: str) -> dict | None:
+def _find_pending_row_and_entry(transaction_id: str) -> tuple[int, dict] | None:
     worksheet = get_db_worksheet("pending")
-
     cell = worksheet.find(transaction_id)
 
     if cell is None:
         return None
 
-    row = worksheet.row_values(cell.row)
-    _, sheet_id, entry_json = row
+    row_values = worksheet.row_values(cell.row)
+    _, sheet_id, entry_json = row_values
 
-    return {"sheet_id": sheet_id, "entry": json.loads(entry_json)}
+    return cell.row, {"sheet_id": sheet_id, "entry": json.loads(entry_json)}
 
 
-def delete_pending_transaction(transaction_id: str) -> None:
+def get_pending_transaction(transaction_id: str) -> dict | None:
+    result = _find_pending_row_and_entry(transaction_id)
+    return result[1] if result is not None else None
+
+
+def delete_pending_transaction(transaction_id: str, row: int | None = None) -> None:
     worksheet = get_db_worksheet("pending")
-    cell = worksheet.find(transaction_id)
 
-    if cell is not None:
-        worksheet.delete_rows(cell.row)
+    if row is None:
+        cell = worksheet.find(transaction_id)
+        row = cell.row if cell is not None else None
+
+    if row is not None:
+        worksheet.delete_rows(row)
 
 
-def update_pending_transaction(transaction_id: str, entry) -> bool:
+def update_pending_transaction(
+    transaction_id: str,
+    entry,
+    row: int | None = None,
+) -> bool:
     """Overwrites the entry for an existing pending transaction.
     Returns True if the row was found and updated, False if no such transaction_id exists.
+
+    Pass `row` if already known to skip a redundant find().
     """
     worksheet = get_db_worksheet("pending")
-    cell = worksheet.find(transaction_id)
 
-    if cell is None:
+    if row is None:
+        cell = worksheet.find(transaction_id)
+        row = cell.row if cell is not None else None
+
+    if row is None:
         return False
 
-    worksheet.update_cell(cell.row, 3, json.dumps(entry))
+    worksheet.update_cell(row, 3, json.dumps(entry))
     return True
 
 
@@ -106,14 +123,20 @@ async def handle_accept(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     transaction_id = query.data.split(":", 1)[1]
-    pending = get_pending_transaction(transaction_id)
 
-    if pending is None:
+    # Single find() covers both the read and the later delete (row is reused
+    # below), instead of the original's two separate find() calls for the
+    # same transaction_id.
+    result = await asyncio.to_thread(_find_pending_row_and_entry, transaction_id)
+
+    if result is None:
         await query.edit_message_text("This transaction is no longer pending.")
         return
 
-    save_transaction(pending["sheet_id"], pending["entry"])
-    delete_pending_transaction(transaction_id)
+    row, pending = result
+
+    await asyncio.to_thread(save_transaction, pending["sheet_id"], pending["entry"])
+    await asyncio.to_thread(delete_pending_transaction, transaction_id, row)
 
     await query.edit_message_text("✅ Transaction added successfully.")
 
@@ -132,7 +155,7 @@ async def handle_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     transaction_id = query.data.split(":", 1)[1]
-    pending = get_pending_transaction(transaction_id)
+    pending = await asyncio.to_thread(get_pending_transaction, transaction_id)
 
     if pending is None:
         await query.edit_message_text("This transaction is no longer pending.")
@@ -187,7 +210,7 @@ async def handle_transaction_message(
         )
         return
 
-    update_pending_transaction(transaction_id, new_entry)
+    await asyncio.to_thread(update_pending_transaction, transaction_id, new_entry)
 
     context.chat_data.pop("awaiting_transaction", None)
 
@@ -249,7 +272,7 @@ async def handle_reject_confirm(update: Update, context: ContextTypes.DEFAULT_TY
     await query.answer()
 
     transaction_id = query.data.split(":", 1)[1]
-    delete_pending_transaction(transaction_id)
+    await asyncio.to_thread(delete_pending_transaction, transaction_id)
 
     await query.edit_message_text("❌ Transaction rejected. Nothing was added.")
 
