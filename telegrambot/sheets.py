@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import nonmember
 import json
 import os
 import re
@@ -102,7 +103,6 @@ def get_worksheet_for_year(
 def seed_spreadsheet(spreadsheet: gspread.Spreadsheet) -> None:
     """First-time setup: create Instructions and Categories sheets.
     Year sheets (e.g. '2026') are created lazily as transactions come in.
-    Safe to call repeatedly.
     """
     worksheets = spreadsheet.worksheets()
     existing_titles = {worksheet.title for worksheet in worksheets}
@@ -124,7 +124,6 @@ def seed_spreadsheet(spreadsheet: gspread.Spreadsheet) -> None:
 
         instructions_worksheet.update(INSTRUCTIONS_CONTENT, "A1")
         format_instructions(instructions_worksheet)
-        
 
     if "Categories" not in existing_titles:
         categories_worksheet = spreadsheet.add_worksheet(
@@ -160,7 +159,7 @@ def parse_entry_date(date_str: str) -> datetime:
 
 
 def maybe_insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime) -> None:
-    # TODO: Optimise this (Don't get all values)
+    # TODO: Optimise this (Don't get all values - track the last recorded entry in the sheet in the db)
     all_values = worksheet.get_all_values()
 
     if len(all_values) <= 1:
@@ -183,25 +182,14 @@ def maybe_insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime)
 
 
 def insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime, row_index: int) -> None:
-    label = entry_dt.strftime("%B %Y")
-    worksheet.append_row([f"— {label} —"], value_input_option="USER_ENTERED")
+    month = entry_dt.strftime("%B")
+    worksheet.append_row([f"— {month} —"], value_input_option="USER_ENTERED")
     worksheet.merge_cells(f"A{row_index}:F{row_index}")
     worksheet.format(f"A{row_index}:F{row_index}", {
         "textFormat": {"bold": True},
         "horizontalAlignment": "CENTER",
         "backgroundColor": {"red": 0.93, "green": 0.93, "blue": 0.93},
     })
-
-
-def build_transaction_row(entry: dict) -> list:
-    return [
-        entry["date"],
-        entry["type"],
-        entry["category"],
-        entry["amount"],
-        entry["currency"],
-        entry.get("description", "")
-    ]
 
 
 def save_transaction(sheet_id: str, entry: dict, ) -> None:
@@ -212,11 +200,18 @@ def save_transaction(sheet_id: str, entry: dict, ) -> None:
 
     maybe_insert_month_divider(worksheet, entry_dt)
 
-    row = build_transaction_row(entry)
+    row = [
+        entry["date"],
+        entry["type"],
+        entry["category"],
+        entry["amount"],
+        entry["currency"],
+        entry.get("description", "")
+    ]
 
     worksheet.append_row(row, value_input_option="USER_ENTERED")
 
-    return
+    return None
 
 
 def get_categories(sheet_id: str) -> tuple[list[str], list[str]]:

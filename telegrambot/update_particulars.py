@@ -15,7 +15,6 @@ def extract_sheet_id(url: str) -> str | None:
     return match.group(1) if match else None
 
 
-# ── Entry point: reply keyboard button tap ──────────────────────────
 async def handle_update_particulars(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "What would you like to update?",
@@ -23,7 +22,6 @@ async def handle_update_particulars(update: Update, context: ContextTypes.DEFAUL
     )
 
 
-# ── Inline submenu selections ────────────────────────────────────────
 async def update_email(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
@@ -120,6 +118,7 @@ async def cancel_particulars(
 
     query = update.callback_query
 
+    # query.answers tells Telegram that the bot has received and processed the button click
     await query.answer()
     await query.edit_message_text("Cancelled, nothing changed.")
 

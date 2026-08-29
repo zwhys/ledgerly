@@ -50,11 +50,7 @@ def find_db_row(
     email: str | None = None,
     sheet_id: str | None = None,
 ) -> Optional[int]:
-    """Return the 1-indexed row number matching the first provided identifier.
-
-    Checks the in-memory row cache before hitting the Sheets API. This turns
-    a repeat lookup for the same user from a network call into a dict lookup.
-    """
+    """Return the 1-indexed row number matching the first provided identifier"""
 
     if chat_id and chat_id in _row_by_chat_id:
         return _row_by_chat_id[chat_id]
@@ -73,7 +69,7 @@ def find_db_row(
         if value:
             try:
                 row = worksheet.find(value, in_column=column).row
-                _cache_row(row, chat_id=chat_id,
+                cache_row(row, chat_id=chat_id,
                            email=email, sheet_id=sheet_id)
                 return row
             except gspread.exceptions.CellNotFound:
@@ -82,7 +78,7 @@ def find_db_row(
     return None
 
 
-def _cache_row(
+def cache_row(
     row: int,
     chat_id: str | None = None,
     email: str | None = None,
@@ -113,7 +109,7 @@ def save_user_sheet(chat_id: str, sheet_id: str) -> None:
 
     if row is not None:
         worksheet.update(f"C{row}", [[sheet_id]])
-        _cache_row(row, chat_id=chat_id, sheet_id=sheet_id)
+        cache_row(row, chat_id=chat_id, sheet_id=sheet_id)
     else:
         worksheet.append_row([chat_id, "", sheet_id])
 

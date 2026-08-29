@@ -66,7 +66,7 @@ def save_pending_transaction(
     ])
 
 
-def _find_pending_row_and_entry(transaction_id: str) -> tuple[int, dict] | None:
+def find_pending_row_and_entry(transaction_id: str) -> tuple[int, dict] | None:
     worksheet = get_db_worksheet("pending")
     cell = worksheet.find(transaction_id)
 
@@ -80,7 +80,7 @@ def _find_pending_row_and_entry(transaction_id: str) -> tuple[int, dict] | None:
 
 
 def get_pending_transaction(transaction_id: str) -> dict | None:
-    result = _find_pending_row_and_entry(transaction_id)
+    result = find_pending_row_and_entry(transaction_id)
     return result[1] if result is not None else None
 
 
@@ -95,26 +95,17 @@ def delete_pending_transaction(transaction_id: str, row: int | None = None) -> N
         worksheet.delete_rows(row)
 
 
-def update_pending_transaction(
-    transaction_id: str,
-    entry,
-    row: int | None = None,
-) -> bool:
+def update_pending_transaction(transaction_id: str, entry) -> bool:
     """Overwrites the entry for an existing pending transaction.
     Returns True if the row was found and updated, False if no such transaction_id exists.
-
-    Pass `row` if already known to skip a redundant find().
     """
     worksheet = get_db_worksheet("pending")
+    cell = worksheet.find(transaction_id)
 
-    if row is None:
-        cell = worksheet.find(transaction_id)
-        row = cell.row if cell is not None else None
-
-    if row is None:
+    if cell is None:
         return False
 
-    worksheet.update_cell(row, 3, json.dumps(entry))
+    worksheet.update_cell(cell.row, 3, json.dumps(entry))
     return True
 
 
@@ -124,10 +115,7 @@ async def handle_accept(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     transaction_id = query.data.split(":", 1)[1]
 
-    # Single find() covers both the read and the later delete (row is reused
-    # below), instead of the original's two separate find() calls for the
-    # same transaction_id.
-    result = await asyncio.to_thread(_find_pending_row_and_entry, transaction_id)
+    result = await asyncio.to_thread(find_pending_row_and_entry, transaction_id)
 
     if result is None:
         await query.edit_message_text("This transaction is no longer pending.")
