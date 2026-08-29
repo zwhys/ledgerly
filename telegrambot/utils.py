@@ -67,6 +67,11 @@ async def cancel_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 
+async def cancel_no_active_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    await update.message.reply_text("There is nothing to cancel.")
+
+
 async def help_cmd(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
@@ -78,7 +83,7 @@ async def help_cmd(
         "/help — Show this help message.\n"
         "/cancel — Cancel the current operation.\n\n"
         "You can also use the buttons in the menu to:\n"
-        "• Update your email or Google Sheet"
+        "• Update your email or Google Sheet\n"
         "• Add a transaction\n"
     )
 

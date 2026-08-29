@@ -9,7 +9,7 @@ from telegram.ext import (
 
 from update_particulars import handle_update_particulars, onboarding_handler, update_particulars_handler
 from add_transaction import handle_add_transaction
-from utils import help_cmd
+from utils import cancel_no_active_cmd, help_cmd
 from vetting import handle_accept, handle_reject, handle_edit, handle_reject_cancel, handle_reject_confirm, handle_transaction_message
 
 ENV = os.getenv("ENV", "dev")
@@ -64,6 +64,7 @@ def main():
         # group, so without this, the broad filter could swallow messages meant for those handlers.
         # Both groups get checked independently, so nothing gets stolen.
     )
+    application.add_handler(CommandHandler("cancel", cancel_no_active_cmd))
 
     application.run_polling()
 
