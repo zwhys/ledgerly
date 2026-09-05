@@ -1,5 +1,4 @@
 from datetime import datetime
-from enum import nonmember
 import json
 import os
 import re
@@ -95,6 +94,7 @@ def get_worksheet_for_year(
             index=2,
         )
         worksheet.update([HEADERS], "A1")
+        format_worksheet_for_year(year)
 
     _worksheets[key] = worksheet
     return worksheet
@@ -151,6 +151,16 @@ def format_categories(categories_worksheet: gspread.Worksheet) -> None:
     for cell in ["A1", "A2"]:
         categories_worksheet.format(
             cell, {"textFormat": {"bold": True}})
+
+
+# TODO: Check that this works
+def format_worksheet_for_year(year: gspread.Worksheet) -> None:
+    year.format("D:D", {
+        "numberFormat": {
+            "type": "CURRENCY",
+            "pattern": '"S$"#,##0.00;-"S$"#,##0.00'
+        }
+    })
 
 
 def parse_entry_date(date_str: str) -> datetime:
