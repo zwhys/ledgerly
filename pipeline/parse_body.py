@@ -6,10 +6,10 @@ from telegrambot.sheets import get_categories
 
 
 EXPENSE_BLOCK_PATTERN = (
-    r"Date\s*&\s*Time:\s*(.+)\n"
-    r"Amount:\s*(.+)\n"
-    r"From:\s*(.+)\n"
-    r"\sTo:\s*(.+)"
+    r"Date\s*&\s*Time:\s*(.*?)\s+"
+    r"Amount:\s*(.*?)\s+"
+    r"From:\s*(.*?)\s+"
+    r"To:\s*(.*)"
 )
 
 INCOME_BLOCK_PATTERN = (

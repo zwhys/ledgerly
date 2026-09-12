@@ -10,7 +10,7 @@ def format_date(date: str, full_date: str) -> str:
     '''Formats date to be like 14/08/2026 13:22:37 (SGT)'''
     date_dt = datetime.strptime(
         date.replace(" (SGT)", ""),
-        "%d %b %H:%M"
+        "%d %b %Y %H:%M SGT"
     )
 
     full_date_dt = datetime.strptime(
