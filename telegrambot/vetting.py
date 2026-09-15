@@ -200,7 +200,6 @@ async def handle_transaction_message(
 
     await asyncio.to_thread(update_pending_transaction, transaction_id, new_entry)
 
-    context.chat_data.pop("awaiting_transaction", None)
 
     text_preview = format_entry_message(new_entry)
     keyboard = build_vet_transaction_keyboard(transaction_id)
@@ -210,6 +209,7 @@ async def handle_transaction_message(
         reply_markup=keyboard,
     )
 
+    context.chat_data.pop("awaiting_transaction", None)
 
 def parse_text(text: str) -> dict | None:
     """Parses the prefilled edit format into an entry dictionary."""

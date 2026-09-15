@@ -41,9 +41,9 @@ def main():
     # no longer inside the onboarding conversation)
     application.add_handler(update_particulars_handler)
     application.add_handler(MessageHandler(filters.Text(
-        ["Update particulars"]), handle_update_particulars))
+        ["⚙️ Update particulars"]), handle_update_particulars))
     application.add_handler(MessageHandler(filters.Text(
-        ["Add transaction"]), handle_add_transaction))
+        ["➕ Add transaction"]), handle_add_transaction))
     application.add_handler(CallbackQueryHandler(
         handle_accept, pattern=r"^accept:"))
     application.add_handler(CallbackQueryHandler(
