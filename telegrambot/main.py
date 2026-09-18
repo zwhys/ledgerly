@@ -41,9 +41,9 @@ def main():
     # no longer inside the onboarding conversation)
     application.add_handler(update_particulars_handler)
     application.add_handler(MessageHandler(filters.Text(
-        ["⚙️ Update particulars"]), handle_update_particulars))
+        ["Update particulars"]), handle_update_particulars))
     application.add_handler(MessageHandler(filters.Text(
-        ["➕ Add transaction"]), handle_add_transaction))
+        ["Add transaction"]), handle_add_transaction))
     application.add_handler(CallbackQueryHandler(
         handle_accept, pattern=r"^accept:"))
     application.add_handler(CallbackQueryHandler(
@@ -55,14 +55,13 @@ def main():
     application.add_handler(CallbackQueryHandler(
         handle_reject_cancel, pattern=r"^reject_cancel:"))
     application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND,
-                       handle_transaction_message),
+        MessageHandler(
+            filters.TEXT
+            & ~filters.COMMAND
+            & ~filters.Text(["Add transaction", "Update particulars"]),
+            handle_transaction_message,
+        ),
         group=1,
-        # handle_edit_message uses a broad filter so it catches the reply after "Edit" is tapped
-        # Putting it in its own group (instead of default group=0) stops it from competing with
-        # more specific text handlers like "Update particulars" — PTB only runs one match per
-        # group, so without this, the broad filter could swallow messages meant for those handlers.
-        # Both groups get checked independently, so nothing gets stolen.
     )
     application.add_handler(CommandHandler("cancel", cancel_no_active_cmd))
 

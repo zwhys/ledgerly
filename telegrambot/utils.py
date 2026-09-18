@@ -12,7 +12,7 @@ AWAITING_NEW_EMAIL, AWAITING_NEW_SHEET_URL = range(100, 102)
 
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
-    [["⚙️ Update particulars", "➕ Add transaction"]],
+    [["Update particulars", "Add transaction"]],
     resize_keyboard=True,
     one_time_keyboard=False,
 )

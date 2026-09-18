@@ -5,7 +5,6 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from database import get_sheet_id
-from vetting import save_pending_transaction
 
 
 def get_datetime() -> str:
@@ -21,9 +20,11 @@ async def handle_add_transaction(
 
     sheet_id = await asyncio.to_thread(get_sheet_id, chat_id=chat_id)
 
-    await asyncio.to_thread(save_pending_transaction, transaction_id, sheet_id)
-
-    context.chat_data["awaiting_transaction"] = transaction_id
+    context.chat_data["awaiting_transaction"] = {
+        "transaction_id": transaction_id,
+        "sheet_id": sheet_id,
+        "action": "add",
+    }
 
     prefill_text = (
         f"Date: {get_datetime()}\n"

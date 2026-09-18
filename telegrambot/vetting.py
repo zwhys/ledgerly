@@ -149,7 +149,10 @@ async def handle_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("This transaction is no longer pending.")
         return
 
-    context.chat_data["awaiting_transaction"] = transaction_id
+    context.chat_data["awaiting_transaction"] = {
+        "transaction_id": transaction_id,
+        "action": "edit",
+    }
 
     entry = pending["entry"]
 
@@ -172,10 +175,13 @@ async def handle_transaction_message(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ):
-    transaction_id = context.chat_data.get("awaiting_transaction")
+    pending = context.chat_data.get("awaiting_transaction")
 
-    if transaction_id is None:
+    if pending is None:
         return
+
+    transaction_id = pending["transaction_id"]
+    action = pending["action"]
 
     text = update.message.text.strip()
 
@@ -198,8 +204,29 @@ async def handle_transaction_message(
         )
         return
 
-    await asyncio.to_thread(update_pending_transaction, transaction_id, new_entry)
+    if action == "add":
+        sheet_id = pending["sheet_id"]
 
+        await asyncio.to_thread(
+            save_pending_transaction,
+            transaction_id,
+            sheet_id,
+            new_entry,
+        )
+
+    elif action == "edit":
+        updated = await asyncio.to_thread(
+            update_pending_transaction,
+            transaction_id,
+            new_entry,
+        )
+
+        if not updated:
+            await update.message.reply_text(
+                "This transaction is no longer pending."
+            )
+            context.chat_data.pop("awaiting_transaction", None)
+            return
 
     text_preview = format_entry_message(new_entry)
     keyboard = build_vet_transaction_keyboard(transaction_id)
@@ -210,6 +237,7 @@ async def handle_transaction_message(
     )
 
     context.chat_data.pop("awaiting_transaction", None)
+
 
 def parse_text(text: str) -> dict | None:
     """Parses the prefilled edit format into an entry dictionary."""
