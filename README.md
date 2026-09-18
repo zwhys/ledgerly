@@ -50,21 +50,7 @@ Create a `.env` file in the project root:
 touch .env
 ```
 
-Add the required environment variables:
-
-```env
-OPENAI_API_KEY=your_openai_api_key
-
-GOOGLE_REFRESH_TOKEN=your_google_refresh_token
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_SERVICE_ACCOUNT=your_google_service_account_json
-
-DB_SPREADSHEET_ID=your_database_spreadsheet_id
-
-TELEGRAM_TOKEN=your_telegram_bot_token
-TELEGRAM_BOT_NAME=your_telegram_bot_name
-```
+Add the required environment variables as shown in ```.env.example```
 
 Do not commit `.env` or any credential files to the repository.
 
@@ -79,7 +65,7 @@ Configure the required OAuth credentials and service account credentials.
 
 ### 6. Import Gmail Filters
 
-Download `mailFilters.xml` and import it into the Gmail account used by Ledgerly:
+Download `mailFilters.xml` and import it into the Gmail account that recieves that banking emails:
 
 1. Open [Gmail](https://mail.google.com/).
 2. Go to **Settings → See all settings**.
@@ -102,15 +88,19 @@ User transaction spreadsheets should also be shared with the configured service 
 Start the Telegram bot:
 
 ```bash
-python -m telegrambot.main
+cd telegrambot
+
+python main.py
 ```
 
 ### 9. Run the Transaction Pipeline
 
-Start the transaction processing pipeline:
+Run the transaction processing pipeline:
 
 ```bash
-python -m pipeline.main
+cd pipeline
+
+python main.py
 ```
 
 Ledgerly is now ready to use.
