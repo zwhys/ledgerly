@@ -3,7 +3,7 @@ import re
 from telegram import Update
 from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
 
-from database import connect_user_sheet, save_email, save_user_sheet
+from database import connect_user_sheet, save_email
 from utils import start_cmd, cancel_cmd, CANCEL_PARTICULARS_INLINE, MAIN_KEYBOARD, PARTICULARS_INLINE, AWAITING_EMAIL, AWAITING_SHEET_URL, AWAITING_NEW_EMAIL, AWAITING_NEW_SHEET_URL
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -56,7 +56,6 @@ async def receive_email(
     chat_id = str(update.effective_chat.id)
 
     await asyncio.to_thread(save_email, chat_id, email)
-    context.user_data["email"] = email
 
     if is_new_email:
         await update.message.reply_text("✅ Email updated successfully.")

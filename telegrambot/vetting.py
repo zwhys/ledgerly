@@ -34,7 +34,7 @@ def format_entry_message(entry: dict) -> str:
     )
 
 
-async def send_telegram_message(entry, sheet_id, transaction_id):
+async def send_telegram_message(entry, sheet_id, action, transaction_id):
     chat_id = await asyncio.to_thread(get_chat_id, sheet_id)
     if chat_id is None:
         print(
@@ -44,7 +44,7 @@ async def send_telegram_message(entry, sheet_id, transaction_id):
     text = format_entry_message(entry)
     keyboard = build_vet_transaction_keyboard(transaction_id)
 
-    await asyncio.to_thread(save_pending_transaction, transaction_id, sheet_id, entry)
+    await asyncio.to_thread(save_pending_transaction, transaction_id, sheet_id, action, entry)
 
     try:
         await bot.send_message(chat_id=chat_id, text=text, reply_markup=keyboard)
@@ -55,6 +55,7 @@ async def send_telegram_message(entry, sheet_id, transaction_id):
 def save_pending_transaction(
     transaction_id: str,
     sheet_id: str,
+    action: str,
     entry: dict | None = None
 ) -> None:
     worksheet = get_db_worksheet("pending")
@@ -62,6 +63,7 @@ def save_pending_transaction(
     worksheet.append_row([
         transaction_id,
         sheet_id,
+        action,
         json.dumps(entry) if entry is not None else ""
     ])
 
@@ -73,10 +75,18 @@ def find_pending_row_and_entry(transaction_id: str) -> tuple[int, dict] | None:
     if cell is None:
         return None
 
-    row_values = worksheet.row_values(cell.row)
-    _, sheet_id, entry_json = row_values
+    row_values = worksheet.get(f"A{cell.row}:D{cell.row}")[0]
+    row_values += [""] * (4 - len(row_values))
 
-    return cell.row, {"sheet_id": sheet_id, "entry": json.loads(entry_json)}
+    _, sheet_id, action, entry_json = row_values
+
+    entry = json.loads(entry_json) if entry_json else None
+
+    return cell.row, {
+        "sheet_id": sheet_id,
+        "action": action,
+        "entry": entry,
+    }
 
 
 def get_pending_transaction(transaction_id: str) -> dict | None:
@@ -105,7 +115,18 @@ def update_pending_transaction(transaction_id: str, entry) -> bool:
     if cell is None:
         return False
 
-    worksheet.update_cell(cell.row, 3, json.dumps(entry))
+    worksheet.update_cell(cell.row, 4, json.dumps(entry))
+    return True
+
+
+def update_pending_action(transaction_id: str, action: str) -> bool:
+    worksheet = get_db_worksheet("pending")
+    cell = worksheet.find(transaction_id)
+
+    if cell is None:
+        return False
+
+    worksheet.update_cell(cell.row, 3, action)
     return True
 
 
@@ -149,14 +170,13 @@ async def handle_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("This transaction is no longer pending.")
         return
 
-    context.chat_data["awaiting_transaction"] = {
-        "transaction_id": transaction_id,
-        "action": "edit",
-    }
-
+    # sheet_id = pending["sheet_id"]
     entry = pending["entry"]
+    await asyncio.to_thread(update_pending_transaction, transaction_id, entry)
+    await asyncio.to_thread(update_pending_action, transaction_id, "edit")
 
     prefill_text = (
+        f"Transaction ID: {transaction_id}\n"
         f"Date: {entry['date']}\n"
         f"Transaction: {entry['type']}\n"
         f"Category: {entry['category']}\n"
@@ -171,22 +191,45 @@ async def handle_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+def extract_transaction_id(text: str):
+    lines = text.splitlines()
+
+    for line in lines:
+        if line.startswith("Transaction ID:"):
+            return line.split(":", 1)[1].strip()
+
+    return None
+
+
 async def handle_transaction_message(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ):
-    pending = context.chat_data.get("awaiting_transaction")
-
-    if pending is None:
-        return
-
-    transaction_id = pending["transaction_id"]
-    action = pending["action"]
-
     text = update.message.text.strip()
 
     if text.startswith("```") and text.endswith("```"):
         text = text[3:-3].strip()
+
+    transaction_id = extract_transaction_id(text)
+
+    if transaction_id is None:
+        await update.message.reply_text(
+            "Missing Transaction ID."
+        )
+        return
+
+    pending = await asyncio.to_thread(
+        get_pending_transaction,
+        transaction_id
+    )
+
+    if pending is None:
+        await update.message.reply_text(
+            "This transaction is no longer pending."
+        )
+        return
+
+    action = pending["action"]
 
     new_entry = parse_text(text)
 
@@ -194,6 +237,7 @@ async def handle_transaction_message(
         await update.message.reply_text(
             "Couldn't parse that. Please use the format:\n\n"
             "```text\n"
+            "Transaction ID: ...\n"
             "Date: ...\n"
             "Transaction: ...\n"
             "Category: ...\n"
@@ -204,39 +248,30 @@ async def handle_transaction_message(
         )
         return
 
-    if action == "add":
-        sheet_id = pending["sheet_id"]
+    updated = await asyncio.to_thread(
+        update_pending_transaction,
+        transaction_id,
+        new_entry,
+    )
 
-        await asyncio.to_thread(
-            save_pending_transaction,
-            transaction_id,
-            sheet_id,
-            new_entry,
+    if not updated:
+        await update.message.reply_text(
+            "This transaction is no longer pending."
         )
-
-    elif action == "edit":
-        updated = await asyncio.to_thread(
-            update_pending_transaction,
-            transaction_id,
-            new_entry,
-        )
-
-        if not updated:
-            await update.message.reply_text(
-                "This transaction is no longer pending."
-            )
-            context.chat_data.pop("awaiting_transaction", None)
-            return
+        return
 
     text_preview = format_entry_message(new_entry)
     keyboard = build_vet_transaction_keyboard(transaction_id)
 
+    if action == "edit":
+        message = f"Updated:\n\n{text_preview}"
+    else:
+        message = text_preview
+
     await update.message.reply_text(
-        f"Updated:\n\n{text_preview}",
+        message,
         reply_markup=keyboard,
     )
-
-    context.chat_data.pop("awaiting_transaction", None)
 
 
 def parse_text(text: str) -> dict | None:

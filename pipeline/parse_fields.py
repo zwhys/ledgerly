@@ -38,7 +38,7 @@ def parse_fields(fields: dict, category: str) -> dict:
         "amount": match.group(2),
         "currency": match.group(1),
         "sheet_id": fields["sheet_id"],
-        "transaction_id": str(uuid.uuid4())
+        "transaction_id": str(uuid.uuid4())[-12:]
     }
 
     return entry

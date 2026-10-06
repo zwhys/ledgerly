@@ -10,8 +10,9 @@ async def process_entries(entries):
     for entry in entries:
         sheet_id = entry['sheet_id']
         transaction_id = entry['transaction_id']
+        action = ""
 
-        await send_telegram_message(entry, sheet_id, transaction_id)
+        await send_telegram_message(entry, sheet_id, action, transaction_id)
 
 
 def main(event, context):

@@ -5,7 +5,7 @@ from sheets import get_spreadsheet, seed_spreadsheet
 
 WORKSHEETS = {
     "users": ["chat_id", "email", "sheet_id"],
-    "pending": ["transaction_id", "sheet_id", "entry"],
+    "pending": ["transaction_id", "sheet_id", "action", "entry"],
 }
 
 
