@@ -9,20 +9,18 @@ from categorise import categorise_all
 
 def format_date(date: str, full_date: str) -> str:
     '''Formats date to be like 14/08/2026 13:22:37 (SGT)'''
+    full_date = full_date.strip()
+
+    if full_date.endswith(" SGT"):
+        full_date = full_date[:-4]
+
     date_dt = datetime.strptime(
-        date.replace(" (SGT)", ""),
-        "%d %b %Y %H:%M SGT"
-    )
-
-    full_date_dt = datetime.strptime(
         full_date,
-        "%a, %d %b %Y %H:%M:%S %z"
+        "%d %b %Y %H:%M"
     )
 
-    return (
-        f"{date_dt.day:02d}/{date_dt.month:02d}/{full_date_dt.year} "
-        f"{date_dt.strftime('%H:%M')}:{full_date_dt.second:02d} (SGT)"
-    )  # TODO: Look at effect on overseas transitions
+    # TODO: Look at effect on overseas transitions
+    return date_dt.strftime("%d/%m/%Y %H:%M:%S")
 
 
 def parse_fields(fields: dict, category: str) -> dict:
@@ -33,7 +31,16 @@ def parse_fields(fields: dict, category: str) -> dict:
         logging.error("Missing amount: fields=%s", fields)
         return None
 
-    match = re.match(r"([A-Za-z]+)\s*([\d.]+)", amount)
+    match = re.match(r"(S\$|[A-Za-z]{3})\s*([\d.]+)", amount) #TODO: Fix the regex for overseas transactions
+
+    if not match:
+        logging.error("Invalid amount format: %s", amount)
+        return None
+
+    currency = match.group(1)
+
+    if currency == "S$":
+        currency = "SGD"
 
     # Returns date, amount, from, to, type, full_date, sheet_id, expense_categories, income_categories
     # Data is date, type, category, amount, currency
@@ -43,12 +50,12 @@ def parse_fields(fields: dict, category: str) -> dict:
         "type": fields["type"],
         "category": category,
         "amount": match.group(2),
-        "currency": match.group(1),
+        "currency": currency,
         "sheet_id": fields["sheet_id"],
         "transaction_id": str(uuid.uuid4())[-12:]
     }
 
-    logging.info('Entry: ', entry)
+    logging.info('Entry: %s', entry)
 
     return entry
 

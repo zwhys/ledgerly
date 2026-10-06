@@ -82,6 +82,6 @@ def categorise_all(list_of_fields: list[dict], max_workers: int = 5) -> list[str
                 categories[i] = future.result()
             except Exception as e:
                 categories[i] = {"category": "Other"}
-                logging.error("Categorisation error: ", e)
+                logging.error("Categorisation error: %s", e)
 
     return categories

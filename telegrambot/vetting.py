@@ -18,7 +18,6 @@ if ENV == "dev":
 
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 
-bot = Bot(token=TELEGRAM_TOKEN)
 pending_transactions: dict[str, dict] = {}
 
 
@@ -42,16 +41,20 @@ async def send_telegram_message(entry, sheet_id, action, transaction_id):
             f"No chat_id found for sheet_id={sheet_id}, skipping Telegram send.")
         return
 
+    bot = Bot(token=TELEGRAM_TOKEN)
     text = format_entry_message(entry)
     keyboard = build_vet_transaction_keyboard(transaction_id)
 
-    await asyncio.to_thread(save_pending_transaction, transaction_id, sheet_id, action, entry)
-
     try:
         await bot.send_message(chat_id=chat_id, text=text, reply_markup=keyboard)
+        await asyncio.to_thread(save_pending_transaction, transaction_id, sheet_id, action, entry)
+
         logging.info("Telegram message sent successfully")
     except Exception as e:
-        logging.exception(f"Failed to send Telegram message for transaction_id={transaction_id}: {e}")
+        logging.exception(
+            f"Failed to send Telegram message for transaction_id={transaction_id}: {e}")
+    finally:
+        await bot.shutdown()
 
 
 def save_pending_transaction(
