@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from extract import get_all_message_info
 from parse_body import get_fields
 from parse_fields import parse_data_all
@@ -30,11 +31,7 @@ def main(event, context):
         if fields.get('date') and fields.get('amount') is None:
             continue
 
-        # TODO: Find out if sheet_id needs to be in entries (Sheet_id is used to process_entries)
         sheet_id = fields.get("sheet_id")
-
-        # print("SHEET ID:", sheet_id)
-        # Test prints
 
         if sheet_id is None:
             continue
@@ -42,9 +39,9 @@ def main(event, context):
         list_of_fields.append(fields)
 
     if list_of_fields:
+        logging.info("LIST OF FIELDS: %s", list_of_fields)
+
         entries = parse_data_all(list_of_fields)
-        # print("ENTRIES:", entries)
-        # Test prints
 
         asyncio.run(process_entries(entries))
 

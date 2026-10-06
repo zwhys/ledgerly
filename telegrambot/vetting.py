@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 from telegram import Bot, Update
 from telegram.ext import ContextTypes
@@ -48,8 +49,9 @@ async def send_telegram_message(entry, sheet_id, action, transaction_id):
 
     try:
         await bot.send_message(chat_id=chat_id, text=text, reply_markup=keyboard)
+        logging.info("Telegram message sent successfully")
     except Exception as e:
-        print(f"Failed to send Telegram message for sheet_id={sheet_id}: {e}")
+        logging.exception(f"Failed to send Telegram message for transaction_id={transaction_id}: {e}")
 
 
 def save_pending_transaction(

@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 import re
 from datetime import datetime
@@ -26,7 +27,13 @@ def format_date(date: str, full_date: str) -> str:
 
 def parse_fields(fields: dict, category: str) -> dict:
     '''Now takes the category/confidence as an argument instead of computing it itself'''
-    match = re.match(r"([A-Za-z]+)\s*([\d.]+)", fields["amount"])
+    amount = fields.get("amount")
+
+    if not amount:
+        logging.error("Missing amount: fields=%s", fields)
+        return None
+
+    match = re.match(r"([A-Za-z]+)\s*([\d.]+)", amount)
 
     # Returns date, amount, from, to, type, full_date, sheet_id, expense_categories, income_categories
     # Data is date, type, category, amount, currency
@@ -40,6 +47,8 @@ def parse_fields(fields: dict, category: str) -> dict:
         "sheet_id": fields["sheet_id"],
         "transaction_id": str(uuid.uuid4())[-12:]
     }
+
+    logging.info('Entry: ', entry)
 
     return entry
 

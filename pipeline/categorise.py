@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any, Literal
 from pydantic import BaseModel
@@ -80,7 +81,7 @@ def categorise_all(list_of_fields: list[dict], max_workers: int = 5) -> list[str
             try:
                 categories[i] = future.result()
             except Exception as e:
-                # TODO: Take a look at how to handle the exception
-                categories[i] = {"category": "Other", "error": str(e)}
+                categories[i] = {"category": "Other"}
+                logging.error("Categorisation error: ", e)
 
     return categories
