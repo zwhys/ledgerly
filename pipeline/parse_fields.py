@@ -17,7 +17,7 @@ def format_date(date: str, full_date: str) -> str:
 
     year = datetime.strptime(
         full_date,
-        "%a, %d %b %Y %H:%M:%S %z"
+        "%a, %d %b %Y %H:%M %z"
     ).year
 
     date_dt = datetime.strptime(

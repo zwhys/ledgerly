@@ -9,7 +9,7 @@ from vetting import save_pending_transaction
 
 
 def get_datetime() -> str:
-    return datetime.now().strftime("%d/%m/%Y %H:%M:%S (SGT)")
+    return datetime.now().strftime("%d/%m/%Y %H:%M (SGT)")
 
 
 async def handle_add_transaction(

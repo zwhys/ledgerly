@@ -165,7 +165,7 @@ def format_worksheet_for_year(year: gspread.Worksheet) -> None:
 
 def parse_entry_date(date_str: str) -> datetime:
     cleaned = re.sub(r"\s*\([^)]*\)\s*$", "", date_str.strip())
-    return datetime.strptime(cleaned, "%d/%m/%Y %H:%M:%S")
+    return datetime.strptime(cleaned, "%d/%m/%Y %H:%M")
 
 
 def maybe_insert_month_divider(worksheet: gspread.Worksheet, entry_dt: datetime) -> None:
