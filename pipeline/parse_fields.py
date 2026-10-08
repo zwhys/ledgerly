@@ -8,19 +8,27 @@ from categorise import categorise_all
 
 
 def format_date(date: str, full_date: str) -> str:
-    '''Formats date to be like 14/08/2026 13:22:37 (SGT)'''
+    """Formats date as DD/MM/YYYY HH:MM (SGT)."""
+
     full_date = full_date.strip()
 
     if full_date.endswith(" SGT"):
         full_date = full_date[:-4]
 
-    date_dt = datetime.strptime(
+    year = datetime.strptime(
         full_date,
-        "%d %b %Y %H:%M"
+        "%a, %d %b %Y %H:%M:%S %z"
+    ).year
+
+    date_dt = datetime.strptime(
+        date.strip().replace(" (SGT)", ""),
+        "%d %b %H:%M"
     )
 
+    formatted = date_dt.replace(year=year)
+
+    return formatted.strftime("%d/%m/%Y %H:%M (SGT)")
     # TODO: Look at effect on overseas transitions
-    return date_dt.strftime("%d/%m/%Y %H:%M:%S")
 
 
 def parse_fields(fields: dict, category: str) -> dict:
@@ -31,7 +39,8 @@ def parse_fields(fields: dict, category: str) -> dict:
         logging.error("Missing amount: fields=%s", fields)
         return None
 
-    match = re.match(r"(S\$|[A-Za-z]{3})\s*([\d.]+)", amount) #TODO: Fix the regex for overseas transactions
+    # TODO: Fix the regex for overseas transactions
+    match = re.match(r"(S\$|[A-Za-z]{3})\s*([\d.]+)", amount)
 
     if not match:
         logging.error("Invalid amount format: %s", amount)

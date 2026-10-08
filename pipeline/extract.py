@@ -16,13 +16,26 @@ GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me"
 
 
 def get_response(session: AuthorizedSession) -> dict:
-    '''Get all unread responses in user inbox'''
+    '''Get messages based on environment'''
+
+    if ENV == "dev":
+        query = "is:read"
+        max_results = 2
+    else:
+        query = "is:unread"
+        max_results = None
+
+    params = {"q": query}
+
+    if max_results:
+        params["maxResults"] = max_results
+
     response = session.get(
         f"{GMAIL_API}/messages",
-        params={"q": "is:unread"},
+        params=params,
     )
 
-    response.raise_for_status()  # Prevents response from being empty
+    response.raise_for_status()
     return response.json()
 
 

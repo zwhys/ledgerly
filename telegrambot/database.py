@@ -54,8 +54,10 @@ def find_db_row(
 
     if chat_id and chat_id in _row_by_chat_id:
         return _row_by_chat_id[chat_id]
+
     if email and email in _row_by_email:
         return _row_by_email[email]
+
     if sheet_id and sheet_id in _row_by_sheet_id:
         return _row_by_sheet_id[sheet_id]
 
@@ -67,13 +69,17 @@ def find_db_row(
 
     for column, value in fields.items():
         if value:
-            try:
-                row = worksheet.find(value, in_column=column).row
-                cache_row(row, chat_id=chat_id,
-                           email=email, sheet_id=sheet_id)
+            cell = worksheet.find(value, in_column=column)
+
+            if cell is not None:
+                row = cell.row
+                cache_row(
+                    row,
+                    chat_id=chat_id,
+                    email=email,
+                    sheet_id=sheet_id,
+                )
                 return row
-            except gspread.exceptions.CellNotFound:
-                pass
 
     return None
 
