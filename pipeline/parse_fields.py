@@ -17,17 +17,23 @@ def format_date(date: str, full_date: str) -> str:
 
     year = datetime.strptime(
         full_date,
-        "%a, %d %b %Y %H:%M %z"
+        "%a, %d %b %Y %H:%M:%S %z"
     ).year
 
+    date = date.strip().replace(" (SGT)", "")
+
     date_dt = datetime.strptime(
-        date.strip().replace(" (SGT)", ""),
+        date,
+        "%d %b %Y %H:%M"
+    ) if len(date.split()) == 4 else datetime.strptime(
+        date,
         "%d %b %H:%M"
-    )
+    ).replace(year=year)
 
     formatted = date_dt.replace(year=year)
 
     return formatted.strftime("%d/%m/%Y %H:%M (SGT)")
+
     # TODO: Look at effect on overseas transitions
 
 
